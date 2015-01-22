@@ -1,15 +1,20 @@
 import scalariform.formatter.preferences._
 
-name := "rabbitmq-scala-client"
+lazy val commonSettings = Seq(
+  scalaVersion := "2.11.5",
+  organization := "io.relayr"
+)
 
-organization := "io.relayr"
-
-scalaVersion := "2.11.5"
-
-libraryDependencies ++= Seq(
-  "org.apache.qpid" % "qpid-broker" % "0.30" % "test",
-  "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test",
-  "com.rabbitmq" % "amqp-client" % "3.4.2")
+lazy val `rabbitmq-scala-client` = (project in file(".")).
+  configs(IntegrationTest).
+  settings(commonSettings: _*).
+  settings(Defaults.itSettings: _*).
+  settings(
+    libraryDependencies ++= Seq(
+      "org.apache.qpid" % "qpid-broker" % "0.30" % "it",
+      "org.scalatest" % "scalatest_2.11" % "2.2.1" % "it,test",
+      "com.rabbitmq" % "amqp-client" % "3.4.2")
+  )
 
 scalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
