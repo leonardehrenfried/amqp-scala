@@ -1,7 +1,6 @@
 package io.relayr.amqp
 
-import scala.concurrent.{ExecutionContext, Future}
-
+import scala.concurrent.{ ExecutionContext, Future }
 
 /** Parameters to create an exchange and bind to its messages */
 case class ExchangeParameters(name: String, passive: Boolean, exchangeType: String, durable: Boolean = false, autodelete: Boolean = false, args: Map[String, AnyRef] = Map.empty)
@@ -21,7 +20,7 @@ case class Message(contentType: String, contentEncoding: String, body: Array[Byt
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
   /** Adds a handler to respond to RPCs on a particular binding */
-  def rpcServer(binding: Binding)(handler: (Message) => Future[Message])(implicit ec: ExecutionContext): RPCServer
+  def rpcServer(binding: Binding)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
 
   /** Creates a client for making RPCs via amqp */
   def rpcClient(exchange: String, routingKey: String)(deliveryMode: DeliveryMode): RPCClient
