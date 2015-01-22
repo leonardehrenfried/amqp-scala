@@ -1,7 +1,11 @@
 package io.relayr.amqp
 
-import scala.concurrent.duration.FiniteDuration
-
-private[amqp] object ReconnectionStrategy {
-  val default: Stream[FiniteDuration] = ???
+object ReconnectionStrategy {
+  val default: Option[ReconnectionStrategy] = None
 }
+
+trait ReconnectionStrategy {
+  def scheduleReconnection(f: ⇒ Unit): Unit
+}
+
+//case class ReconnectionStrategy(reconnectDelays: Stream[FiniteDuration], reconnectionExecutor: ExecutionContext)

@@ -58,5 +58,5 @@ trait ConnectionHolder {
 
 case class ConnectionHolderBuilder(
   connectionFactory: ConnectionFactory,
-  reconnectionStrategy: Stream[FiniteDuration] = ReconnectionStrategy.default,
-  eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy)
+  reconnectionStrategy: Option[ReconnectionStrategy] = ReconnectionStrategy.default,
+  eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks)
