@@ -33,7 +33,7 @@ trait ChannelOwner {
 /** Makes RPCs to a particular exchange + routing key combo with set DeliveryMode */
 trait RPCClient {
   /** Possible exceptions are TimeoutException and UndeliveredException */
-  def apply(message: Message): Future[Message]
+  def apply(message: Message)(implicit timeout: FiniteDuration): Future[Message]
 }
 
 /** Closeable for a handler of RPCs, close to stop the handler from being called */
