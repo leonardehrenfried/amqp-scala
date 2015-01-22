@@ -1,14 +1,21 @@
+import scalariform.formatter.preferences._
+
 name := "rabbitmq-scala-client"
 
-version := "0.1-SNAPSHOT"
+organization := "io.relayr"
 
-organization := "relayr"
-
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.5"
 
 libraryDependencies ++= Seq(
   "org.apache.qpid" % "qpid-broker" % "0.30" % "test",
-  "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test")
-
-libraryDependencies ++= Seq(
+  "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test",
   "com.rabbitmq" % "amqp-client" % "3.4.2")
+
+scalariformSettings ++ Seq(
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(PreserveDanglingCloseParenthesis, true)
+    .setPreference(PreserveSpaceBeforeArguments, true)
+    .setPreference(RewriteArrowSymbols, true)
+)
