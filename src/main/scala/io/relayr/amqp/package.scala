@@ -1,5 +1,8 @@
 package io.relayr.amqp
 
+import com.rabbitmq.client.ConnectionFactory
+
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 
 /** Parameters to create an exchange and bind to its messages */
@@ -45,9 +48,14 @@ object DeliveryMode {
 }
 
 /** Holds a connection, the underlying connection may be replaced if it fails */
-trait Connection {
+trait ConnectionHolder {
   /** Create a new channel multiplexed over this connection */
   def newChannel(qos: Int): ChannelOwner
 
   def close()
 }
+
+case class ConnectionHolderBuilder(
+  connectionFactory: ConnectionFactory,
+  reconnectionStrategy: Stream[FiniteDuration] = ReconnectionStrategy.default,
+  eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy)
