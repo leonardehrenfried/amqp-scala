@@ -1,5 +1,7 @@
 # rabbitmq-scala-client
 
+NOTE: this is at very early stages and is not a working client yet
+
 Wrapper around the rabbitmq-java-client for better scala usage.
 
 
