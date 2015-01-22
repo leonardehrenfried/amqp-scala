@@ -12,7 +12,7 @@ lazy val `rabbitmq-scala-client` = (project in file(".")).
   settings(
     libraryDependencies ++= Seq(
       "org.apache.qpid" % "qpid-broker" % "0.30" % "it",
-      "org.scalatest" % "scalatest_2.11" % "2.2.1" % "it,test",
+      "org.scalatest" %% "scalatest" % "2.2.1" % "it,test",
       "com.rabbitmq" % "amqp-client" % "3.4.2")
   )
 

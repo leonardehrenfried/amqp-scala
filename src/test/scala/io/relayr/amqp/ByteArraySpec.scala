@@ -1,7 +1,6 @@
 package io.relayr.amqp
 
-import org.scalatest.{FlatSpec, Matchers}
-
+import org.scalatest.{ FlatSpec, Matchers }
 
 class ByteArraySpec extends FlatSpec with Matchers {
 
@@ -9,7 +8,7 @@ class ByteArraySpec extends FlatSpec with Matchers {
     val i = ByteArray(Array(1: Byte))
     i.toArray should be (Array(1: Byte))
   }
-  
+
   it should "not be mutatable by the producer" in {
     val m = Array(1: Byte)
     val i = ByteArray(m)
@@ -17,7 +16,7 @@ class ByteArraySpec extends FlatSpec with Matchers {
     m should be (Array(2: Byte))
     i.toArray should be (Array(1: Byte))
   }
-  
+
   it should "not be mutatable by the consumer" in {
     val i = ByteArray(Array(1: Byte))
     val m: Array[Byte] = i.toArray
