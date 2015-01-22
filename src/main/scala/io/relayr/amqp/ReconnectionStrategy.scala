@@ -2,6 +2,6 @@ package io.relayr.amqp
 
 import scala.concurrent.duration.FiniteDuration
 
-object ReconnectionStrategy {
+private[amqp] object ReconnectionStrategy {
   val default: Stream[FiniteDuration] = ???
 }

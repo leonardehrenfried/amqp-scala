@@ -1,6 +1,7 @@
 package io.relayr.amqp
 
 import com.rabbitmq.client.ConnectionFactory
+import io.relayr.amqp.connection.ConnectionHolderFactory
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
@@ -18,7 +19,7 @@ case class Binding(exchangeParameters: ExchangeParameters, queueParameters: Queu
 case class UndeliveredException() extends Exception
 
 /** Message blob with content headers */
-case class Message(contentType: String, contentEncoding: String, body: Array[Byte])
+case class Message(contentType: String, contentEncoding: String, body: ByteArray)
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
