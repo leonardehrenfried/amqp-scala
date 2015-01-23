@@ -25,3 +25,7 @@ private[connection] class ChannelOwnerImpl(val cs: ChannelSessionProvider, execu
    */
   override def rpcClient(exchange: String, routingKey: String)(deliveryMode: DeliveryMode): RPCClient = ???
 }
+
+private[connection] object ChannelOwnerImpl extends ChannelFactory {
+  def apply(cs: ChannelSessionProvider, executionContext: ExecutionContext) = new ChannelOwnerImpl(cs, executionContext)
+}

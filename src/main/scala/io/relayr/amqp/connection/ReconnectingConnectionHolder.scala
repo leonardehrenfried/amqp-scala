@@ -5,7 +5,7 @@ import io.relayr.amqp.{ ChannelOwner, ConnectionHolder, EventHooks, Reconnection
 
 import scala.concurrent.{ ExecutionContext, blocking }
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit val executionContext: ExecutionContext) extends ConnectionHolder {
+private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -43,7 +43,7 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
       currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
-      new ChannelOwnerImpl(new InternalChannelSessionProvider(key), executionContext)
+      channelFactory(new InternalChannelSessionProvider(key), executionContext)
     }
   }
 
@@ -67,7 +67,3 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
 private class CurrentConnection(var connection: Option[Connection], var channelMappings: Map[ChannelKey, Channel])
 
 private class ChannelKey(val qos: Int)
-
-private[connection] trait ChannelSessionProvider {
-  def withChannel[T](expression: (Channel) ⇒ T): T
-}
