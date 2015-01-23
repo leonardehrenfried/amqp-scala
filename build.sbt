@@ -5,7 +5,7 @@ lazy val commonSettings = Seq(
   organization := "io.relayr"
 )
 
-lazy val `rabbitmq-scala-client` = (project in file(".")).
+lazy val root = Project("rabbitmq-scala-client", file(".")).
   configs(IntegrationTest).
   settings(commonSettings: _*).
   settings(Defaults.itSettings: _*).
