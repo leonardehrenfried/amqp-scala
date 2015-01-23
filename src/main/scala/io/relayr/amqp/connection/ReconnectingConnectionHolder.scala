@@ -3,40 +3,42 @@ package io.relayr.amqp.connection
 import com.rabbitmq.client._
 import io.relayr.amqp.{ ChannelOwner, ConnectionHolder, EventHooks, ReconnectionStrategy }
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, blocking }
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, executionContext: ExecutionContext) extends ConnectionHolder {
+private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit val executionContext: ExecutionContext) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
-  currentConnection = connect()
+  reconnect()
 
-  private def connect(): CurrentConnection = this.synchronized {
-    val conn = factory.newConnection()
-    conn.addShutdownListener(new ShutdownListener {
-      override def shutdownCompleted(cause: ShutdownSignalException): Unit = {
-        reconnectionStrategy.foreach(r ⇒ r.scheduleReconnection { currentConnection = connect() })
+  private def reconnect(): Unit = this.synchronized {
+    blocking {
+      val conn = factory.newConnection()
+      conn.addShutdownListener(new ShutdownListener {
+        override def shutdownCompleted(cause: ShutdownSignalException): Unit = {
+          reconnectionStrategy.foreach(r ⇒ r.scheduleReconnection { reconnect() })
+        }
+      })
+      def recreateChannels(channelKeys: Iterable[ChannelKey]): Map[ChannelKey, Channel] = {
+        channelKeys.map(channelKey ⇒
+          (channelKey, createChannel(conn, channelKey.qos))
+        ).toMap
       }
-    })
-    new CurrentConnection(Some(conn), currentConnection.channelMappings.map {
-      case (channelKey, _) ⇒
-        val qos: Int = channelKey.qos
-        val channel: Channel = createChannel(conn, qos)
-        (channelKey, channel)
-    })
+      currentConnection = new CurrentConnection(Some(conn), recreateChannels(currentConnection.channelMappings.keys))
+    }
   }
 
-  val m: Method = ???
-
-  def createChannel(conn: Connection, qos: Int): Channel = {
-    // these are probably blocking
+  private def createChannel(conn: Connection, qos: Int): Channel = blocking {
     val channel = conn.createChannel()
-    channel.basicQos(qos)
     // NOTE there may be other parameters possible to set up on the connection at the start
+    channel.basicQos(qos)
     channel
   }
 
-  /** Create a new channel multiplexed over this connection */
+  /**
+   * Create a new channel multiplexed over this connection.
+   * @note Blocks on creation of the underlying channel
+   */
   override def newChannel(qos: Int): ChannelOwner = this.synchronized {
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
@@ -45,8 +47,9 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     }
   }
 
+  /** Close the connection. */
   override def close(): Unit = this.synchronized {
-    currentConnection.connection.foreach(_.close())
+    currentConnection.connection.foreach(c ⇒ blocking { c.close() })
   }
 
   class InternalChannelSessionProvider(key: ChannelKey) extends ChannelSessionProvider {
