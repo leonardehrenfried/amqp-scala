@@ -2,7 +2,10 @@
 
 NOTE: this is at very early stages and is not a working client yet
 
-Wrapper around the rabbitmq-java-client for better scala usage.
+Wrapper around the rabbitmq-java-client for better scala usage. Much of this is based on 
+[amqp-client](https://github.com/sstone/amqp-client) by [sstone](https://github.com/sstone). 
+The main reason for the rewrite is to not require our clients to use akka, to be easier to configure and to implement 
+event hooks to enable statistics gathering.
 
 
 ## Requirements

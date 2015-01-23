@@ -1,4 +1,4 @@
-package io.relayr.amqp.test
+package amqptest
 
 import com.rabbitmq.client.ConnectionFactory
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}

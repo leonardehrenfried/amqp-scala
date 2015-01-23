@@ -1,4 +1,4 @@
-package io.relayr.amqp.test
+package amqptest
 
 import java.io.{File, FileInputStream, FileOutputStream, InputStream}
 import java.net.{JarURLConnection, URL}
