@@ -5,7 +5,7 @@ import io.relayr.amqp.{ ChannelOwner, ConnectionHolder, EventHooks, Reconnection
 
 import scala.concurrent.{ ExecutionContext, blocking }
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -57,7 +57,7 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
       f(currentConnection.channelMappings(key))
   }
 
-  def ensuringConnection[T](function: (Connection) ⇒ T): T = currentConnection.connection match {
+  private def ensuringConnection[T](function: (Connection) ⇒ T): T = currentConnection.connection match {
     case Some(con) ⇒ function(con)
     // TODO explain and discuss this state exception
     case None      ⇒ throw new IllegalStateException("Not connected")
