@@ -58,5 +58,6 @@ trait ConnectionHolder {
 
 case class ConnectionHolderBuilder(
   connectionFactory: ConnectionFactory,
+  executionContext: ExecutionContext,
   reconnectionStrategy: Option[ReconnectionStrategy] = ReconnectionStrategy.default,
-  eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks)
+  eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)

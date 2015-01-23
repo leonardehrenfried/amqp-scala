@@ -3,7 +3,9 @@ package io.relayr.amqp.connection
 import com.rabbitmq.client._
 import io.relayr.amqp.{ ChannelOwner, ConnectionHolder, EventHooks, ReconnectionStrategy }
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks) extends ConnectionHolder {
+import scala.concurrent.ExecutionContext
+
+private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, executionContext: ExecutionContext) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -24,9 +26,13 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     })
   }
 
+  val m: Method = ???
+
   def createChannel(conn: Connection, qos: Int): Channel = {
+    // these are probably blocking
     val channel = conn.createChannel()
     channel.basicQos(qos)
+    // NOTE there may be other parameters possible to set up on the connection at the start
     channel
   }
 
@@ -35,7 +41,7 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
       currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
-      new ChannelOwnerImpl(new InternalChannelSessionProvider(key))
+      new ChannelOwnerImpl(new InternalChannelSessionProvider(key), executionContext)
     }
   }
 
