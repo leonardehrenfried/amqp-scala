@@ -6,14 +6,22 @@ import io.relayr.amqp.connection.ConnectionHolderFactory
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 
-/** Parameters to create an exchange and bind to its messages */
-case class ExchangeParameters(name: String, passive: Boolean, exchangeType: String, durable: Boolean = false, autodelete: Boolean = false, args: Map[String, AnyRef] = Map.empty)
+/** Defines an exchange to connect to or create */
+sealed trait Exchange
+/** Describes an exchange which should already exist, an error is thrown if it does not */
+case class ExchangePassive(name: String) extends Exchange
+/** Parameters to create a new exchange */
+case class ExchangeDeclare(name: String, exchangeType: String, durable: Boolean = false, autodelete: Boolean = false, args: Map[String, AnyRef] = Map.empty) extends Exchange
 
-/** Parameters to create and bind to a queue */
-case class QueueParameters(name: String, passive: Boolean, durable: Boolean = false, exclusive: Boolean = false, autodelete: Boolean = true, args: Map[String, AnyRef] = Map.empty)
+/** Defines a queue to connect to or create */
+sealed trait Queue
+/** Describes an exchange which should already exist, an error is thrown if it does not */
+case class QueuePassive(name: String) extends Queue
+/** Parameters to create a new queue */
+case class QueueDeclare(name: String, durable: Boolean = false, exclusive: Boolean = false, autodelete: Boolean = true, args: Map[String, AnyRef] = Map.empty) extends Queue
 
 /** All parameters to set up a queue to listen for messages on */
-case class Binding(exchangeParameters: ExchangeParameters, queueParameters: QueueParameters, routingKey: String)
+case class Binding(exchangeParameters: Exchange, queueParameters: Queue, routingKey: String)
 
 /** The queue server found nowhere to route the message */
 case class UndeliveredException() extends Exception
