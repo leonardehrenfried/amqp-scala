@@ -4,6 +4,7 @@ import com.rabbitmq.client._
 import io.relayr.amqp._
 import io.relayr.amqp.rpc.client.Delivery
 
+import scala.collection.JavaConversions
 import scala.concurrent.{ ExecutionContext, Future }
 
 /**
@@ -32,7 +33,10 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
     })
   }
 
-  override def createQueue(queueDeclare: QueueDeclare): QueueDeclared = ???
+  override def createQueue(queue: QueueDeclare): QueueDeclared = withChannel { channel ⇒
+    val declareOk = channel.queueDeclare(queue.name.getOrElse(""), queue.durable, queue.exclusive, queue.autodelete, JavaConversions.mapAsJavaMap(queue.args))
+    QueueDeclared(declareOk.getQueue)
+  }
 }
 
 private[connection] object ChannelOwnerImpl extends ChannelFactory {

@@ -1,8 +1,8 @@
 package io.relayr.amqp.connection
 
 import com.rabbitmq.client.{ AMQP, Channel, Consumer }
-import io.relayr.amqp.{ Message, ByteArray }
 import io.relayr.amqp.rpc.client.Delivery
+import io.relayr.amqp.{ ByteArray, Message }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -46,6 +46,14 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
 
         javaConsumer.handleDelivery("", null, properties, body)
       }
+    }
+
+    "createQueue" should {
+      "create a new queue" in {
+        //        (channel.queueDeclare _: (String, Boolean, Boolean, Boolean, java.util.Map[String, Object]) ⇒ Queue.DeclareOk) expects ("queue name", false, false, false, null: java.util.Map[String, Object])
+        //        TODO : I cant make scalamock work with java maps
+      }
+
     }
   }
 }
