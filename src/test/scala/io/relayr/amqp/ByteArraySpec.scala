@@ -4,7 +4,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 
 class ByteArraySpec extends FlatSpec with Matchers {
 
-  "ByteArray" should "produce what was put in" in {
+  "ByteArray" should "produce an array of what was put in" in {
     val i = ByteArray(Array(1: Byte))
     i.toArray should be (Array(1: Byte))
   }
@@ -22,5 +22,15 @@ class ByteArraySpec extends FlatSpec with Matchers {
     val m: Array[Byte] = i.toArray
     m.update(0, 2)
     i.toArray should be (Array(1: Byte))
+  }
+
+  it should "produce a list" in {
+    val i = ByteArray(Array(1: Byte))
+    i.toList should be (List(1: Byte))
+  }
+
+  it should "be mappable" in {
+    val i = ByteArray(Array(1: Byte))
+    i.map(1 +) should be (Seq(2: Byte))
   }
 }
