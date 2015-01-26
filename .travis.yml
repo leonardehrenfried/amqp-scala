@@ -4,5 +4,3 @@ scala:
 - 2.11.5
 script:
 - sbt test
-jdk:
-- openjdk8
