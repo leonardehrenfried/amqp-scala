@@ -17,7 +17,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
 
   /**
    * Adds a handler to respond to RPCs on a particular binding
-   * @param binding specifies the exxchange, queue and routing key to bind the listener of the rpcServer to
+   * @param binding specifies the exchange, queue and routing key to bind the listener of the rpcServer to
    * @param handler function to call with RPC calls
    * @param ec executor for running the handler
    */
@@ -34,7 +34,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
   }
 
   override def createQueue(queue: QueueDeclare): QueueDeclared = withChannel { channel ⇒
-    val declareOk = channel.queueDeclare(queue.name.getOrElse(""), queue.durable, queue.exclusive, queue.autodelete, JavaConversions.mapAsJavaMap(queue.args))
+    val declareOk = channel.queueDeclare(queue.name.getOrElse(""), queue.durable, queue.exclusive, queue.autoDelete, JavaConversions.mapAsJavaMap(queue.args))
     QueueDeclared(declareOk.getQueue)
   }
 }

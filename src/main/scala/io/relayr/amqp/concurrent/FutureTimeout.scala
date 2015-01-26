@@ -7,7 +7,7 @@ object FutureTimeout {
   /**
    * Returns a new future which will be completed either by the original future or by a timeout exception after the
    * specified delay. Timeout tasks are cancelled when the main future completes
-   * @param duration to set timout
+   * @param duration to set timeout
    * @param future for the main completion of the returned future
    * @param executor schedules the timeout and combines the futures
    */

@@ -18,4 +18,4 @@ case class ExchangePassive(name: String) extends Exchange {
 }
 
 /** Parameters to create a new exchange */
-case class ExchangeDeclare(name: String, exchangeType: String, durable: Boolean = false, autodelete: Boolean = false, args: Map[String, AnyRef] = Map.empty) extends Exchange
+case class ExchangeDeclare(name: String, exchangeType: String, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty) extends Exchange

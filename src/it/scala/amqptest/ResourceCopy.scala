@@ -10,12 +10,12 @@ import sun.net.www.protocol.file.FileURLConnection
 
 object ResourceCopy {
 
-  def copyFilesRecusively(origin: File, destination: File): Unit = origin match {
+  def copyFilesRecursively(origin: File, destination: File): Unit = origin match {
     case dir if dir.isDirectory ⇒
       destination.exists() || destination.mkdir()
       assert(destination.isDirectory)
       dir.list().foreach(filename ⇒
-        copyFilesRecusively(new File(origin, filename), new File(destination, filename))
+        copyFilesRecursively(new File(origin, filename), new File(destination, filename))
       )
     case file if file.isFile ⇒
       val in = new FileInputStream(file)
@@ -54,7 +54,7 @@ object ResourceCopy {
       case jarConnection: JarURLConnection ⇒
         copyJarResourcesRecursively(jarConnection, destination);
       case _: FileURLConnection ⇒
-        copyFilesRecusively(new File(originUrl.getPath), destination);
+        copyFilesRecursively(new File(originUrl.getPath), destination);
       case urlConnection ⇒
         throw new Exception("URLConnection[" + urlConnection.getClass.getSimpleName +
           "] is not a recognized/implemented connection type.");

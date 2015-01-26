@@ -39,7 +39,7 @@ class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAn
 
     val connectionHolder = new ReconnectingConnectionHolder(factory, None, EventHooks(), synchronousExecutor, channelFactory)
 
-    connectionHolder.newChannel(0) // we wont keep the channel as we are pretedning to be the channel at the moment
+    connectionHolder.newChannel(0) // we wont keep the channel as we are pretending to be the channel at the moment
     sessionProvider.withChannel(channel ⇒
       channel.isOpen should be (true)
     )
