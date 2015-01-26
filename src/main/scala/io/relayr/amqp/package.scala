@@ -3,15 +3,7 @@ package io.relayr.amqp
 import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp.connection.ConnectionHolderFactory
 
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
-
-/** Defines an exchange to connect to or create */
-sealed trait Exchange
-/** Describes an exchange which should already exist, an error is thrown if it does not */
-case class ExchangePassive(name: String) extends Exchange
-/** Parameters to create a new exchange */
-case class ExchangeDeclare(name: String, exchangeType: String, durable: Boolean = false, autodelete: Boolean = false, args: Map[String, AnyRef] = Map.empty) extends Exchange
 
 /** Defines a queue to connect to or create */
 sealed trait Queue
@@ -33,21 +25,14 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 trait ChannelOwner {
   /** Adds a handler to respond to RPCs on a particular binding */
   def rpcServer(binding: Binding)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
-
-  /** Creates a client for making RPCs via amqp */
-  def rpcClient(exchange: String, routingKey: String)(deliveryMode: DeliveryMode): RPCClient
-}
-
-/** Makes RPCs to a particular exchange + routing key combo with set DeliveryMode */
-trait RPCClient {
-  /** Possible exceptions are TimeoutException and UndeliveredException */
-  def apply(message: Message)(implicit timeout: FiniteDuration): Future[Message]
 }
 
 /** Closeable for a handler of RPCs, close to stop the handler from being called */
 trait RPCServer {
   def close(): Unit
 }
+
+case class RoutingDescriptor(exchange: ExchangePassive, routingKey: String, deliveryMode: DeliveryMode)
 
 sealed abstract class DeliveryMode(val value: Int)
 

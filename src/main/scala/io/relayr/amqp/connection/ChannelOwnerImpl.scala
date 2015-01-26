@@ -17,13 +17,6 @@ private[connection] class ChannelOwnerImpl(val cs: ChannelSessionProvider, execu
    * @param ec executor for running the handler
    */
   override def rpcServer(binding: Binding)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer = ???
-
-  /**
-   * Creates a client for making RPCs via amqp
-   * @param exchange to send rpc calls to
-   * @param routingKey for rpc messages
-   */
-  override def rpcClient(exchange: String, routingKey: String)(deliveryMode: DeliveryMode): RPCClient = ???
 }
 
 private[connection] object ChannelOwnerImpl extends ChannelFactory {

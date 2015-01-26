@@ -4,6 +4,7 @@ import java.util.concurrent.Executor
 
 import amqptest.EmbeddedAMQPBroker
 import com.rabbitmq.client.ConnectionFactory
+import io.relayr.amqp.rpc.client._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterEach, BeforeAndAfterAll, FlatSpec, Matchers}
 import scala.concurrent.duration._
@@ -49,13 +50,15 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     }
 
     // create client connection and bind to routing key
-    val rpcClient = clientConnection.newChannel(0).rpcClient("", "test.queue")(DeliveryMode.NotPersistent)
+    val rpcClient = RPCClient(clientConnection.newChannel(0))
+    val rpcDescriptor = Exchange.Direct.route("test.queue", DeliveryMode.NotPersistent)
+    val rpcMethod = rpcClient(rpcDescriptor, 1 second)
 
     // define expectations
     rpcHandler expects testMessage returning Future.successful(testMessage)
 
     // make RPC
-    val rpcResultFuture: Future[Message] = rpcClient(testMessage)(1 second)
+    val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
     val result: Message = Await.result(rpcResultFuture, atMost = 1 second)
     
     // check response
