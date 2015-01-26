@@ -37,15 +37,12 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
   
   val testMessage: Message = Message("type", "encoding", ByteArray("test".getBytes))
 
-  ignore should "make and fulfill RPCs" in {
+  "" should "make and fulfill RPCs" in {
     // create server connection and bind mock handler to queue
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
-      val exchange: ExchangePassive = ExchangePassive("")
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      val routingKey: String = "routingKey not used as this is direct"
-      val rpcQueueBinding = Binding(exchange, queue, routingKey)
-      serverConnection.newChannel(0).rpcServer(rpcQueueBinding)(rpcHandler)(synchronousExecutor)
+      serverConnection.newChannel(0).rpcServer(queue)(rpcHandler)(synchronousExecutor)
     }
 
     // create client connection and bind to routing key

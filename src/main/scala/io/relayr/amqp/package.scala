@@ -1,8 +1,7 @@
 package io.relayr.amqp
 
-import com.rabbitmq.client.{ BasicProperties, ConnectionFactory }
+import com.rabbitmq.client.{ AMQP, BasicProperties, ConnectionFactory }
 import io.relayr.amqp.connection.ConnectionHolderFactory
-import io.relayr.amqp.rpc.client.Delivery
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -24,14 +23,14 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
-  def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties): Unit
+  def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties = new AMQP.BasicProperties()): Unit
 
-  def addConsumer(queueName: String, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit
+  def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit
 
   def createQueue(queueDeclare: QueueDeclare): QueueDeclared
 
   /** Adds a handler to respond to RPCs on a particular binding */
-  def rpcServer(binding: Binding)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
+  def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
 }
 
 /** Closeable for a handler of RPCs, close to stop the handler from being called */

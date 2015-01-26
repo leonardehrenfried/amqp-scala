@@ -1,8 +1,8 @@
 package io.relayr.amqp.connection
 
+import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{ AMQP, Channel, Consumer }
-import io.relayr.amqp.rpc.client.Delivery
-import io.relayr.amqp.{ ByteArray, Message }
+import io.relayr.amqp.{ Delivery, QueuePassive, ByteArray, Message }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -18,19 +18,23 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
     var channelOwner = new ChannelOwnerImpl(cs, ExecutionContext.global)
     val consumer = mockFunction[Delivery, Unit]
 
+    val QUEUE_NAME: String = "queue name"
+
     "addConsumer" should {
       var javaConsumer: Consumer = null
 
-      "add a consumer" in {
-        (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects ("queue name", false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
+      "check that the queue exists and then add a consumer" in {
+        channel.queueDeclarePassive _ expects QUEUE_NAME returning new DeclareOk(QUEUE_NAME, 1, 1)
+        (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects (QUEUE_NAME, false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
 
-        channelOwner.addConsumer("queue name", false, consumer)
+        channelOwner.addConsumer(QueuePassive(QUEUE_NAME), false, consumer)
       }
 
       "build Deliveries" in {
-        (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects ("queue name", false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
+        channel.queueDeclarePassive _ expects QUEUE_NAME returning new DeclareOk(QUEUE_NAME, 1, 1)
+        (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects (QUEUE_NAME, false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
 
-        channelOwner.addConsumer("queue name", false, consumer)
+        channelOwner.addConsumer(QueuePassive(QUEUE_NAME), false, consumer)
 
         val body: Array[Byte] = Array(1: Byte)
         consumer expects where {
@@ -43,6 +47,7 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
         properties.getContentType _ expects () returning "type"
         properties.getContentEncoding _ expects () returning "encoding"
         properties.getCorrelationId _ expects () returning "correlation"
+        properties.getReplyTo _ expects () returning "replyChannel"
 
         javaConsumer.handleDelivery("", null, properties, body)
       }
@@ -50,7 +55,7 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
 
     "createQueue" should {
       "create a new queue" in {
-        //        (channel.queueDeclare _: (String, Boolean, Boolean, Boolean, java.util.Map[String, Object]) ⇒ Queue.DeclareOk) expects ("queue name", false, false, false, null: java.util.Map[String, Object])
+        //        (channel.queueDeclare _: (String, Boolean, Boolean, Boolean, java.util.Map[String, Object]) ⇒ Queue.DeclareOk) expects (QUEUE_NAME, false, false, false, null: java.util.Map[String, Object])
         //        TODO : I cant make scalamock work with java maps
       }
 

@@ -14,9 +14,9 @@ private[client] trait ResponseController {
 /**
  * Sets up a responseQueue, controls the allocation of correlation ids, replyTo queue, fulfilling Promises, timing out responses, reconnecting to replyTo queues
  */
-private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
+private[client] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
   private implicit val executionContext = scheduledExecutor.executionContext
-  val replyQueueName: String = channelOwner.createQueue(QueueDeclare(None)).name
+  val replyQueueName: String = listenChannel.createQueue(QueueDeclare(None)).name
   @volatile private var callCounter: Long = 0L
   private val correlationMap = TrieMap[String, Promise[Message]]()
 
@@ -26,7 +26,7 @@ private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledEx
       case None          ⇒ // TODO probably just create an event
     }
 
-  channelOwner.addConsumer(replyQueueName, autoAck = false, consumer)
+  listenChannel.addConsumer(QueuePassive(replyQueueName), autoAck = false, consumer)
 
   override def prepareResponse(timeout: FiniteDuration): ResponseSpec = {
     val correlationId: String = nextUniqueCorrelationId
@@ -50,10 +50,5 @@ private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledEx
 }
 
 private[client] case class ResponseSpec(correlationId: String, replyTo: String, response: Future[Message])
-
-trait Delivery {
-  def message: Message
-  def correlationId: String
-}
 
 case class RPCTimeout() extends Throwable
