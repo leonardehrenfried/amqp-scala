@@ -2,6 +2,7 @@ package io.relayr.amqp
 
 import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp.connection.ConnectionHolderFactory
+import io.relayr.amqp.rpc.client.Delivery
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -23,6 +24,8 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
+  def addConsumer(queueName: String, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit = ???
+
   def createQueue(queueDeclare: QueueDeclare): QueueDeclared = ???
 
   /** Adds a handler to respond to RPCs on a particular binding */
