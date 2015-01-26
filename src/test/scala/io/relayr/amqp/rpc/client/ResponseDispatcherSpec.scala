@@ -1,6 +1,7 @@
 package io.relayr.amqp.rpc.client
 
 import io.relayr.amqp._
+import io.relayr.amqp.concurrent.ScheduledExecutor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -15,7 +16,7 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
       channel.createQueue _ expects QueueDeclare(None) returning QueueDeclared("queue name")
       var consumer: Delivery ⇒ Unit = null
       channel.addConsumer _ expects ("queue name", false, *) onCall ((_, _, _consumer) ⇒ consumer = _consumer)
-      val responseDispatcher = new ResponseDispatcher(channel)
+      val responseDispatcher = new ResponseDispatcher(channel, new ScheduledExecutor(1))
 
       "return queue name as response replyTo" in {
         responseDispatcher.prepareResponse(1 second).replyTo should be ("queue name")
@@ -40,6 +41,18 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
         consumer(delivery)
         Await.result(response.response, 1 second) should be (message)
       }
+
+      "timeout promises" in {
+        val response = responseDispatcher.prepareResponse(1 milli)
+        intercept[RPCTimeout](Await.result(response.response, 10 millis))
+      }
+
+      "an uncorrelated message is delivered" in {
+        // TODO events
+      }
     }
+
+    // TODO reconnection
+    "the AMQP connection is reconnected" should {}
   }
 }
