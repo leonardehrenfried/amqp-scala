@@ -48,7 +48,7 @@ private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledEx
 private[client] case class ResponseSpec(correlationId: String, replyTo: String, response: Future[Message])
 
 trait Delivery {
-  def message: Message = ???
+  def message: Message
   def correlationId: String
 }
 

@@ -9,6 +9,17 @@ class ByteArray(array: Array[Byte]) extends Traversable[Byte] {
 
   override def foreach[U](f: (Byte) ⇒ U): Unit =
     _array.foreach(f)
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ByteArray ⇒
+      _array sameElements that._array
+    case _ ⇒ false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(_array)
+    state.map(_.hashCode()).foldLeft(0)((a, b) ⇒ 31 * a + b)
+  }
 }
 
 /** Produces an immutable array of bytes */
