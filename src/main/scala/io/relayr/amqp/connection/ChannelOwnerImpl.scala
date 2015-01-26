@@ -37,6 +37,8 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
     val declareOk = channel.queueDeclare(queue.name.getOrElse(""), queue.durable, queue.exclusive, queue.autoDelete, JavaConversions.mapAsJavaMap(queue.args))
     QueueDeclared(declareOk.getQueue)
   }
+
+  override def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties): Unit = ???
 }
 
 private[connection] object ChannelOwnerImpl extends ChannelFactory {

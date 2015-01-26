@@ -7,14 +7,18 @@ import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ Promise, Future }
 import scala.concurrent.duration.FiniteDuration
 
+private[client] trait ResponseController {
+  def prepareResponse(timeout: FiniteDuration): ResponseSpec
+}
+
 /**
  * Sets up a responseQueue, controls the allocation of correlation ids, replyTo queue, fulfilling Promises, timing out responses, reconnecting to replyTo queues
  */
-private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledExecutor: ScheduledExecutor) {
-  implicit val executionContext = scheduledExecutor.executionContext
+private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
+  private implicit val executionContext = scheduledExecutor.executionContext
   val replyQueueName: String = channelOwner.createQueue(QueueDeclare(None)).name
-  @volatile var callCounter: Long = 0L
-  val correlationMap = TrieMap[String, Promise[Message]]()
+  @volatile private var callCounter: Long = 0L
+  private val correlationMap = TrieMap[String, Promise[Message]]()
 
   private def consumer(delivery: Delivery): Unit =
     correlationMap.remove(delivery.correlationId) match {
@@ -24,7 +28,7 @@ private[client] class ResponseDispatcher(channelOwner: ChannelOwner, scheduledEx
 
   channelOwner.addConsumer(replyQueueName, autoAck = false, consumer)
 
-  def prepareResponse(timeout: FiniteDuration): ResponseSpec = {
+  override def prepareResponse(timeout: FiniteDuration): ResponseSpec = {
     val correlationId: String = nextUniqueCorrelationId
     val promise: Promise[Message] = Promise()
     correlationMap += (correlationId → promise)

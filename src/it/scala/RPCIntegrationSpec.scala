@@ -51,7 +51,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     // create client connection and bind to routing key
     val rpcClient = RPCClient(clientConnection.newChannel(0))
     val rpcDescriptor = Exchange.Direct.route("test.queue", DeliveryMode.NotPersistent)
-    val rpcMethod = rpcClient(rpcDescriptor, 1 second)
+    val rpcMethod = rpcClient.newMethod(rpcDescriptor, 1 second)
 
     // define expectations
     rpcHandler expects testMessage returning Future.successful(testMessage)

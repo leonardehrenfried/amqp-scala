@@ -12,7 +12,7 @@ package object client {
   }
 
   trait RPCClient {
-    def apply(routingDescriptor: RoutingDescriptor, timeout: FiniteDuration): RPCMethod
+    def newMethod(routingDescriptor: RoutingDescriptor, timeout: FiniteDuration): RPCMethod
   }
 
   trait RPCMethod {

@@ -1,6 +1,6 @@
 package io.relayr.amqp
 
-import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.{ BasicProperties, ConnectionFactory }
 import io.relayr.amqp.connection.ConnectionHolderFactory
 import io.relayr.amqp.rpc.client.Delivery
 
@@ -24,6 +24,8 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
+  def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties): Unit
+
   def addConsumer(queueName: String, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit
 
   def createQueue(queueDeclare: QueueDeclare): QueueDeclared
