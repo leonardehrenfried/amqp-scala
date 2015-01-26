@@ -1,3 +1,5 @@
+![Build status](https://travis-ci.org/relayr/rabbitmq-scala-client.svg?branch=master)
+
 # rabbitmq-scala-client
 
 NOTE: this is at very early stages and is not a working client yet
