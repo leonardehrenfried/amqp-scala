@@ -10,7 +10,7 @@ sealed trait Queue
 /** Describes an exchange which should already exist, an error is thrown if it does not */
 case class QueuePassive(name: String) extends Queue
 /** Parameters to create a new queue */
-case class QueueDeclare(name: String, durable: Boolean = false, exclusive: Boolean = false, autodelete: Boolean = true, args: Map[String, AnyRef] = Map.empty) extends Queue
+case class QueueDeclare(name: Option[String], durable: Boolean = false, exclusive: Boolean = false, autodelete: Boolean = true, args: Map[String, AnyRef] = Map.empty) extends Queue
 
 /** All parameters to set up a queue to listen for messages on */
 case class Binding(exchangeParameters: Exchange, queueParameters: Queue, routingKey: String)
@@ -23,6 +23,8 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
+  def createQueue(queueDeclare: QueueDeclare): QueueDeclared = ???
+
   /** Adds a handler to respond to RPCs on a particular binding */
   def rpcServer(binding: Binding)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
 }
@@ -54,3 +56,5 @@ case class ConnectionHolderBuilder(
   executionContext: ExecutionContext,
   reconnectionStrategy: Option[ReconnectionStrategy] = ReconnectionStrategy.default,
   eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
+
+case class QueueDeclared(name: String)

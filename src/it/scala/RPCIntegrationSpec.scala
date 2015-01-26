@@ -1,15 +1,14 @@
-package io.relayr.amqp
-
 import java.util.concurrent.Executor
 
 import amqptest.EmbeddedAMQPBroker
 import com.rabbitmq.client.ConnectionFactory
+import io.relayr.amqp._
 import io.relayr.amqp.rpc.client._
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterEach, BeforeAndAfterAll, FlatSpec, Matchers}
-import scala.concurrent.duration._
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
-import scala.concurrent.{Await, ExecutionContextExecutor, Future, ExecutionContext}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
 class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
 
@@ -43,7 +42,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
       val exchange: ExchangePassive = ExchangePassive("")
-      val queue: QueueDeclare = QueueDeclare("test.queue")
+      val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
       val routingKey: String = "routingKey not used as this is direct"
       val rpcQueueBinding = Binding(exchange, queue, routingKey)
       serverConnection.newChannel(0).rpcServer(rpcQueueBinding)(rpcHandler)(synchronousExecutor)

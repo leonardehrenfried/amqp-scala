@@ -9,9 +9,7 @@ object Exchange {
 }
 
 /** Defines an exchange to connect to or create */
-sealed trait Exchange {
-  def name: String
-}
+sealed trait Exchange
 
 /** Describes an exchange which should already exist, an error is thrown if it does not */
 case class ExchangePassive(name: String) extends Exchange {
