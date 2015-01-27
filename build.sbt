@@ -2,7 +2,8 @@ import scalariform.formatter.preferences._
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.5",
-  organization := "io.relayr"
+  organization := "io.relayr",
+  crossScalaVersions := Seq("2.10.4", "2.11.5")
 )
 
 lazy val root = Project("rabbitmq-scala-client", file(".")).
