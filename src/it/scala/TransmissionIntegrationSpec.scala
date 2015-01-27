@@ -16,7 +16,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     val factory = new ConnectionFactory()
     factory.setUri(amqpUri)
     factory.useSslProtocol()
-    ConnectionHolderBuilder(factory, ExecutionContext.global)
+    ConnectionHolder.Builder(factory, ExecutionContext.global)
   }
   
   var serverConnection: ConnectionHolder = null
@@ -43,7 +43,6 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
 
     // define expectations
     receiver expects * onCall { message: Delivery ⇒
-      println("SHIT")
       ()
     }
 

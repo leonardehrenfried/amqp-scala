@@ -23,7 +23,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
    * @param handler function to call with RPC calls
    * @param ec executor for running the handler
    */
-  override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer =
+  override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
     new RPCServerImpl(this, listenQueue, ec, handler)
 
   override def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Closeable = withChannel { channel ⇒
@@ -36,8 +36,8 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
     new ConsumerCloser(consumerTag)
   }
 
-  override def declareQueue(queue: Queue): QueueDeclared = withChannel { channel ⇒
-    QueueDeclared(ensureQueue(channel, queue))
+  override def declareQueue(queue: Queue): String = withChannel { channel ⇒
+    ensureQueue(channel, queue)
   }
 
   override def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): Unit = withChannel { channel ⇒

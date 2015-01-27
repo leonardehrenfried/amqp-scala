@@ -13,7 +13,7 @@ import scala.concurrent.{ ExecutionContext, Future }
  * @param executionContext to run the handler
  * @param handler handles incoming messages
  */
-private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends RPCServer {
+private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends Closeable {
   private val responseExchange: ExchangePassive = Exchange.Default
   private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 

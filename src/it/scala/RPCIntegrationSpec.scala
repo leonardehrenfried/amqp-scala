@@ -17,7 +17,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val factory = new ConnectionFactory()
     factory.setUri(amqpUri)
     factory.useSslProtocol()
-    ConnectionHolderBuilder(factory, ExecutionContext.global)
+    ConnectionHolder.Builder(factory, ExecutionContext.global)
   }
   
   var serverConnection: ConnectionHolder = null
