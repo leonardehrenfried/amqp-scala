@@ -4,8 +4,8 @@ package io.relayr.amqp
 class ByteArray(array: Array[Byte]) extends Traversable[Byte] {
   private val _array = array.clone()
 
-  //  def toArray: Array[Byte] =
-  //    _array.clone()
+  def toArray: Array[Byte] =
+    _array.clone()
 
   override def foreach[U](f: (Byte) ⇒ U): Unit =
     _array.foreach(f)

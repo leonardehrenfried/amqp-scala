@@ -2,7 +2,7 @@ package io.relayr.amqp.connection
 
 import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{ AMQP, Channel, Consumer }
-import io.relayr.amqp.{ Delivery, QueuePassive, ByteArray, Message }
+import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -28,6 +28,17 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
         (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects (QUEUE_NAME, false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
 
         channelOwner.addConsumer(QueuePassive(QUEUE_NAME), false, consumer)
+      }
+
+      "send" should {
+        "send a message" in {
+          // TODO how does scalamock work?
+          //          val message = Message("type", "encoding", ByteArray(Array(1: Byte)))
+          //          val basicProperties = new AMQP.BasicProperties.Builder().appId("app").build()
+
+          //          (channel.basicPublish(_: String, _: String, _: AMQP.BasicProperties, _: Array[Byte])) expects (Exchange.Direct.name, QUEUE_NAME, *, Array(1: Byte))
+          //          channelOwner.send(Exchange.Direct.route(QUEUE_NAME, DeliveryMode.NotPersistent), message, basicProperties)
+        }
       }
 
       "build Deliveries" in {

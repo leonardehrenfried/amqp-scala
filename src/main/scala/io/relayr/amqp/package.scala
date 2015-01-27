@@ -1,6 +1,6 @@
 package io.relayr.amqp
 
-import com.rabbitmq.client.{ AMQP, BasicProperties, ConnectionFactory }
+import com.rabbitmq.client.{ AMQP, ConnectionFactory }
 import io.relayr.amqp.connection.ConnectionHolderFactory
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -23,7 +23,7 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
-  def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties = new AMQP.BasicProperties()): Unit
+  def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties = new AMQP.BasicProperties()): Unit
 
   def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit
 

@@ -37,7 +37,13 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
     QueueDeclared(ensureQueue(channel, queue))
   }
 
-  override def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: BasicProperties): Unit = ???
+  override def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): Unit = withChannel { channel ⇒
+    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, addBasicProperties(routingDescriptor, message, basicProperties), message.body.toArray)
+  }
+
+  private def addBasicProperties(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): AMQP.BasicProperties = {
+    basicProperties.builder().contentEncoding(message.contentEncoding).contentType(message.contentType).deliveryMode(routingDescriptor.deliveryMode.value).build()
+  }
 
   /**
    * Requests a queue declare on the channel, making sure we can use it and obtaining it's name (if we don't have that)

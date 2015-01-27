@@ -14,12 +14,12 @@ private[client] class RPCClientImpl(publishChannel: ChannelOwner, responseContro
 
     override def apply(message: Message): Future[Message] = {
       val ResponseSpec(correlationId, replyTo, response) = responseController.prepareResponse(timeout)
-      val basicProperties: BasicProperties = requestProperties(correlationId, replyTo)
+      val basicProperties: AMQP.BasicProperties = requestProperties(correlationId, replyTo)
       publishChannel.send(routingDescriptor, message, basicProperties)
       response
     }
 
-    def requestProperties(correlationId: String, replyTo: String): BasicProperties = {
+    def requestProperties(correlationId: String, replyTo: String): AMQP.BasicProperties = {
       new AMQP.BasicProperties.Builder().correlationId(correlationId).replyTo(replyTo).build()
     }
   }

@@ -41,6 +41,8 @@ trait EmbeddedAMQPBroker {
     val workDir = new File(tmpFolder, "work")
     println(" qpid home dir=" + homePath.getAbsolutePath)
     println(" qpid work dir=" + workDir.getAbsolutePath)
+    
+    System.setProperty("amqj.logging.level", "DEBUG")
 
     brokerOptions.setConfigProperty("qpid.work_dir", workDir.getAbsolutePath)
 
