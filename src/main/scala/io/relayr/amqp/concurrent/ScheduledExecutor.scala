@@ -20,10 +20,9 @@ object ScheduledExecutor {
  *                      creates a new thread
  * @param handler the handler to use when execution is blocked
  *                because the thread bounds and queue capacities are reached
- * @throws IllegalArgumentException if { @code corePoolSize < 0}
- * @throws NullPointerException if { @code threadFactory} or
- *                                         { @code handler} is null
  */
+@throws[IllegalArgumentException]("if { @code corePoolSize < 0}")
+@throws[NullPointerException]("if { @code threadFactory} or { @code handler} is null")
 class ScheduledExecutor(corePoolSize: Int,
     threadFactory: ThreadFactory = Executors.defaultThreadFactory,
     handler: RejectedExecutionHandler = ScheduledExecutor.defaultHandler) {
@@ -39,9 +38,8 @@ class ScheduledExecutor(corePoolSize: Int,
    * @param by the time from now to delay execution
    * @tparam T the type of the operation's result
    * @return a Future that can be used to extract result
-   * @throws RejectedExecutionException if the task cannot be
-   *                                    scheduled for execution
    */
+  @throws[RejectedExecutionException]("if the task cannot be scheduled for execution")
   def delayExecution[T](operation: ⇒ T)(by: FiniteDuration): CancellableFuture[T] = {
     val promise = Promise[T]()
     val scheduledFuture: ScheduledFuture[_] = underlying.schedule(new Runnable {
