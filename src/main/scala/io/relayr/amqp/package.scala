@@ -1,5 +1,6 @@
 package io.relayr.amqp
 
+import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.{ AMQP, ConnectionFactory }
 import io.relayr.amqp.connection.ConnectionHolderFactory
 
@@ -24,6 +25,9 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
   def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties = new AMQP.BasicProperties()): Unit
+
+  def sendPublish(publish: Publish): Unit =
+    send(publish.routingDescriptor, publish.message, publish.properties)
 
   def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Closeable
 
@@ -52,8 +56,13 @@ trait ConnectionHolder {
   /** Create a new channel multiplexed over this connection */
   def newChannel(qos: Int): ChannelOwner
 
+  /** Create a new channel multiplexed over this connection with a qos level set */
+  def newChannel(): ChannelOwner
+
   def close()
 }
+
+case class Publish(routingDescriptor: RoutingDescriptor, message: Message, properties: AMQP.BasicProperties = new BasicProperties())
 
 case class ConnectionHolderBuilder(
   connectionFactory: ConnectionFactory,

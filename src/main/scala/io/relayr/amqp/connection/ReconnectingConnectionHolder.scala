@@ -28,10 +28,10 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     }
   }
 
-  private def createChannel(conn: Connection, qos: Int): Channel = blocking {
+  private def createChannel(conn: Connection, qos: Option[Int]): Channel = blocking {
     val channel = conn.createChannel()
     // NOTE there may be other parameters possible to set up on the connection at the start
-    channel.basicQos(qos)
+    qos.foreach(channel.basicQos)
     channel
   }
 
@@ -39,7 +39,15 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
    * Create a new channel multiplexed over this connection.
    * @note Blocks on creation of the underlying channel
    */
-  override def newChannel(qos: Int): ChannelOwner = this.synchronized {
+  override def newChannel(qos: Int): ChannelOwner = newChannel(Some(qos))
+
+  override def newChannel(): ChannelOwner = newChannel(None)
+
+  /**
+   * Create a new channel multiplexed over this connection.
+   * @note Blocks on creation of the underlying channel
+   */
+  def newChannel(qos: Option[Int] = None): ChannelOwner = this.synchronized {
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
       currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
@@ -66,4 +74,4 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
 
 private class CurrentConnection(var connection: Option[Connection], var channelMappings: Map[ChannelKey, Channel])
 
-private class ChannelKey(val qos: Int)
+private class ChannelKey(val qos: Option[Int])
