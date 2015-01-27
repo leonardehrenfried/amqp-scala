@@ -1,12 +1,12 @@
 package io.relayr.amqp.rpc.client
 
 import com.rabbitmq.client._
-import io.relayr.amqp.{ Message, ChannelOwner, RoutingDescriptor }
+import io.relayr.amqp._
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-private[client] class RPCClientImpl(publishChannel: ChannelOwner, responseController: ResponseController) extends RPCClient {
+private[amqp] class RPCClientImpl(publishChannel: ChannelOwner, responseController: ResponseController) extends RPCClient {
   override def newMethod(routingDescriptor: RoutingDescriptor, timeout: FiniteDuration): RPCMethod =
     new RPCMethodImpl(routingDescriptor, timeout)
 

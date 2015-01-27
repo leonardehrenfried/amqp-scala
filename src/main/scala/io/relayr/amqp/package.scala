@@ -2,8 +2,11 @@ package io.relayr.amqp
 
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.{ AMQP, ConnectionFactory }
+import io.relayr.amqp.concurrent.ScheduledExecutor
 import io.relayr.amqp.connection.ConnectionHolderFactory
+import io.relayr.amqp.rpc.client.{ ResponseDispatcher, RPCClientImpl }
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 
 /** Defines a queue to connect to or create */
@@ -74,4 +77,17 @@ case class QueueDeclared(name: String)
 
 trait Closeable {
   def close(): Unit
+}
+
+object RPCClient {
+  def apply(channel: ChannelOwner): RPCClient =
+    new RPCClientImpl(publishChannel = channel, new ResponseDispatcher(listenChannel = channel, new ScheduledExecutor(1)))
+}
+
+trait RPCClient {
+  def newMethod(routingDescriptor: RoutingDescriptor, timeout: FiniteDuration): RPCMethod
+}
+
+trait RPCMethod {
+  def apply(message: Message): Future[Message]
 }

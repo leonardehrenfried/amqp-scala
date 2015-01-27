@@ -14,7 +14,7 @@ private[client] trait ResponseController {
 /**
  * Sets up a responseQueue, controls the allocation of correlation ids, replyTo queue, fulfilling Promises, timing out responses, reconnecting to replyTo queues
  */
-private[client] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
+private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
   private implicit val executionContext = scheduledExecutor.executionContext
   val replyQueueName: String = listenChannel.declareQueue(QueueDeclare(None)).name
   @volatile private var callCounter: Long = 0L

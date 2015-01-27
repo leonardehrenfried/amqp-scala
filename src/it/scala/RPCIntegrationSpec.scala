@@ -1,7 +1,6 @@
 import amqptest.EmbeddedAMQPBroker
 import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp._
-import io.relayr.amqp.rpc.client._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
