@@ -1,6 +1,7 @@
 package io.relayr.amqp
 
 object Exchange {
+  val Default = ExchangePassive("")
   val Direct = ExchangePassive("amq.direct")
   val Fanout = ExchangePassive("amq.fanout")
   val Topic = ExchangePassive("amq.topic")

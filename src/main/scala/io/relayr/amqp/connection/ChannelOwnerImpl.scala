@@ -24,16 +24,17 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
   override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer =
     new RPCServerImpl(this, listenQueue, ec, handler)
 
-  override def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit = withChannel { channel ⇒
+  override def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
-    channel.basicConsume(queueName, autoAck, new DefaultConsumer(channel) {
+    val consumerTag = channel.basicConsume(queueName, autoAck, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
         consumer(Delivery(properties, body))
       }
     })
+    new ConsumerCloser(consumerTag)
   }
 
-  override def createQueue(queue: QueueDeclare): QueueDeclared = withChannel { channel ⇒
+  override def declareQueue(queue: Queue): QueueDeclared = withChannel { channel ⇒
     QueueDeclared(ensureQueue(channel, queue))
   }
 
@@ -55,6 +56,12 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
     case QueuePassive(name) ⇒
       channel.queueDeclarePassive(name)
         .getQueue
+  }
+
+  class ConsumerCloser(consumerTag: String) extends Closeable {
+    def close(): Unit = withChannel { channel ⇒
+      channel.basicCancel(consumerTag)
+    }
   }
 }
 

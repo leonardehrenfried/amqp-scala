@@ -42,7 +42,7 @@ trait EmbeddedAMQPBroker {
     println(" qpid home dir=" + homePath.getAbsolutePath)
     println(" qpid work dir=" + workDir.getAbsolutePath)
     
-    System.setProperty("amqj.logging.level", "DEBUG")
+    System.setProperty("amqj.logging.level", "INFO")
 
     brokerOptions.setConfigProperty("qpid.work_dir", workDir.getAbsolutePath)
 

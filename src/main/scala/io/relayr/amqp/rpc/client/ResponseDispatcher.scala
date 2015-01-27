@@ -16,7 +16,7 @@ private[client] trait ResponseController {
  */
 private[client] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
   private implicit val executionContext = scheduledExecutor.executionContext
-  val replyQueueName: String = listenChannel.createQueue(QueueDeclare(None)).name
+  val replyQueueName: String = listenChannel.declareQueue(QueueDeclare(None)).name
   @volatile private var callCounter: Long = 0L
   private val correlationMap = TrieMap[String, Promise[Message]]()
 

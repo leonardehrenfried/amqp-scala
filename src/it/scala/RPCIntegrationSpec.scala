@@ -1,5 +1,3 @@
-import java.util.concurrent.Executor
-
 import amqptest.EmbeddedAMQPBroker
 import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp._
@@ -8,17 +6,13 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
 
   override def beforeAll() {
     initializeBroker()
   }
-
-  val synchronousExecutor: ExecutionContextExecutor = ExecutionContext.fromExecutor(new Executor() {
-    override def execute(command: Runnable): Unit = command.run()
-  })
 
   val chf = {
     val factory = new ConnectionFactory()
@@ -42,20 +36,22 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel(0).rpcServer(queue)(rpcHandler)(synchronousExecutor)
+      serverConnection.newChannel(0).rpcServer(queue)(rpcHandler)(ExecutionContext.global)
     }
 
     // create client connection and bind to routing key
     val rpcClient = RPCClient(clientConnection.newChannel(0))
-    val rpcDescriptor = Exchange.Direct.route("test.queue", DeliveryMode.NotPersistent)
-    val rpcMethod = rpcClient.newMethod(rpcDescriptor, 1 second)
+    val rpcDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent)
+    val rpcMethod = rpcClient.newMethod(rpcDescriptor, 10 second)
 
     // define expectations
-    rpcHandler expects testMessage returning Future.successful(testMessage)
+    rpcHandler expects testMessage onCall { message: Message ⇒
+      Future.successful(testMessage)
+    }
 
     // make RPC
     val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
-    val result: Message = Await.result(rpcResultFuture, atMost = 1 second)
+    val result: Message = Await.result(rpcResultFuture, atMost = 10 second)
     
     // check response
     result should be (testMessage)

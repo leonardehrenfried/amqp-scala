@@ -25,9 +25,9 @@ case class Message(contentType: String, contentEncoding: String, body: ByteArray
 trait ChannelOwner {
   def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties = new AMQP.BasicProperties()): Unit
 
-  def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Unit
+  def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Closeable
 
-  def createQueue(queueDeclare: QueueDeclare): QueueDeclared
+  def declareQueue(queue: Queue): QueueDeclared
 
   /** Adds a handler to respond to RPCs on a particular binding */
   def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): RPCServer
@@ -62,3 +62,7 @@ case class ConnectionHolderBuilder(
   eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
 
 case class QueueDeclared(name: String)
+
+trait Closeable {
+  def close(): Unit
+}

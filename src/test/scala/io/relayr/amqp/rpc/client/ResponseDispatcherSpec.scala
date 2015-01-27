@@ -13,9 +13,12 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
   "ResponseDispatcher" when {
     "first created and created listening queue" should {
       val channel = mock[ChannelOwner]
-      channel.createQueue _ expects QueueDeclare(None) returning QueueDeclared("queue name")
+      channel.declareQueue _ expects QueueDeclare(None) returning QueueDeclared("queue name")
       var consumer: Delivery ⇒ Unit = null
-      channel.addConsumer _ expects (QueuePassive("queue name"), false, *) onCall ((_, _, _consumer) ⇒ consumer = _consumer)
+      channel.addConsumer _ expects (QueuePassive("queue name"), false, *) onCall { (_, _, _consumer) ⇒
+        consumer = _consumer
+        mock[Closeable]
+      }
       val responseDispatcher = new ResponseDispatcher(channel, new ScheduledExecutor(1))
 
       "return queue name as response replyTo" in {

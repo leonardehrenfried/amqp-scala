@@ -27,7 +27,10 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     val replyChannel: String = "reply channel"
     val correlationId: String = "correlation id"
     var consumer: Delivery ⇒ Unit = null
-    channelOwner.addConsumer _ expects (queue, true, *) onCall { (Queue, Boolean, _consumer: Delivery ⇒ Unit) ⇒ consumer = _consumer }
+    channelOwner.addConsumer _ expects (queue, true, *) onCall { (_, _, _consumer) ⇒
+      consumer = _consumer
+      mock[Closeable]
+    }
     val rpcServer = new RPCServerImpl(channelOwner, queue, synchronousExecutor, handler)
 
     // when a message is relivered it should trigger the handler
@@ -41,7 +44,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     consumer(delivery)
 
     // when the handler's result is completed, the reply shouldbe sent
-    channelOwner.send _ expects (Exchange.Direct.route(replyChannel, DeliveryMode.NotPersistent), msg, *) onCall {
+    channelOwner.send _ expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), msg, *) onCall {
       (RoutingDescriptor, Message, props: BasicProperties) ⇒
         assert(props.getCorrelationId == correlationId)
     }

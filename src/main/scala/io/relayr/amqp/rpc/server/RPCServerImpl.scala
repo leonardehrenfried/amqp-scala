@@ -14,20 +14,21 @@ import scala.concurrent.{ ExecutionContext, Future }
  * @param handler handles incoming messages
  */
 private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends RPCServer {
-  val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
+  private val responseExchange: ExchangePassive = Exchange.Default
+  private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 
-  channelOwner.addConsumer(listenQueue, autoAck = true, requestConsumer)
+  private val consumerCloser = channelOwner.addConsumer(listenQueue, autoAck = true, requestConsumer)
 
   private def requestConsumer(request: Delivery): Unit =
     executionContext.prepare().execute(new RPCRunnable(request))
-
   private class RPCRunnable(request: Delivery) extends Runnable {
     override def run(): Unit = {
       for (result ← handler(request.message)) {
-        channelOwner.send(Exchange.Direct.route(request.replyTo, deliveryMode), result, new Builder().correlationId(request.correlationId).build())
+        val responseRoute: RoutingDescriptor = responseExchange.route(request.replyTo, deliveryMode)
+        channelOwner.send(responseRoute, result, new Builder().correlationId(request.correlationId).build())
       }
     }
   }
 
-  override def close(): Unit = ???
+  override def close(): Unit = consumerCloser.close()
 }
