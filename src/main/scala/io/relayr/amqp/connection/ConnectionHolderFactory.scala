@@ -14,6 +14,6 @@ private[amqp] class ConnectionHolderFactory(connectionFactory: ConnectionFactory
         connectionFactory.setAutomaticRecoveryEnabled(true)
         connectionFactory.setNetworkRecoveryInterval(networkRecoveryInterval.toMillis)
     }
-    new ReconnectingConnectionHolder(connectionFactory, eventHooks.event, executionContext, ChannelOwnerImpl)
+    new ReconnectingConnectionHolder(connectionFactory, eventHooks.event, ChannelOwnerImpl)
   }
 }

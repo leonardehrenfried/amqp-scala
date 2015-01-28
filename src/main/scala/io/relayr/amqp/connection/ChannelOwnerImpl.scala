@@ -12,9 +12,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 /**
  * Provides different use cases for a channel
  * @param cs provides the channel to be used for these strategies, after a reconnection of the underlying connection this channel would change
- * @param executionContext for any blocking channel management calls to the underlying java client
  */
-private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, executionContext: ExecutionContext) extends ChannelOwner {
+private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends ChannelOwner {
   def withChannel[T]: ((Channel) ⇒ T) ⇒ T = cs.withChannel
 
   /**
@@ -73,6 +72,6 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
 }
 
 private[amqp] object ChannelOwnerImpl extends ChannelFactory {
-  def apply(cs: ChannelSessionProvider, executionContext: ExecutionContext) = new ChannelOwnerImpl(cs, executionContext)
+  def apply(cs: ChannelSessionProvider) = new ChannelOwnerImpl(cs)
 }
 

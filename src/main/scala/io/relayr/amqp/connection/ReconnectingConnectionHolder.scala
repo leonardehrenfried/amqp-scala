@@ -4,10 +4,10 @@ import com.rabbitmq.client._
 import io.relayr.amqp.Event.{ ChannelEvent, ConnectionEvent }
 import io.relayr.amqp._
 
-import scala.concurrent.{ ExecutionContext, blocking }
+import scala.concurrent.blocking
 import scala.concurrent.duration._
 
-private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eventConsumer: Event ⇒ Unit, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -61,7 +61,7 @@ private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eve
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
       currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
-      channelFactory(new InternalChannelSessionProvider(key), executionContext)
+      channelFactory(new InternalChannelSessionProvider(key))
     }
   }
 

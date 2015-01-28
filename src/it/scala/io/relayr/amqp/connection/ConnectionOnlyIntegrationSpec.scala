@@ -32,16 +32,14 @@ class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAn
     factory.useSslProtocol()
 
     var sessionProvider: ChannelSessionProvider = null
-    var executionContext: ExecutionContext = null
-    def channelFactory(cs: ChannelSessionProvider, ec: ExecutionContext): ChannelOwner = {
+    def channelFactory(cs: ChannelSessionProvider): ChannelOwner = {
       sessionProvider = cs
-      executionContext = ec
       null: ChannelOwner // It wont be used anyway
     }
 
     val eventListener = mockFunction[Event, Unit]
     eventListener expects *
-    val connectionHolder = new ReconnectingConnectionHolder(factory, eventListener, synchronousExecutor, channelFactory)
+    val connectionHolder = new ReconnectingConnectionHolder(factory, eventListener, channelFactory)
 
     eventListener expects ChannelEvent.ChannelOpened(1, None)
     connectionHolder.newChannel() // we wont keep the channel as we are pretending to be the channel at the moment

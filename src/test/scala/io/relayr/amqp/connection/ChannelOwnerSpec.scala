@@ -6,8 +6,6 @@ import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
-import scala.concurrent.ExecutionContext
-
 class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
 
   "ChannelOwner" when {
@@ -15,7 +13,7 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
     val cs = new ChannelSessionProvider {
       override def withChannel[T](expression: (Channel) ⇒ T): T = expression(channel)
     }
-    var channelOwner = new ChannelOwnerImpl(cs, ExecutionContext.global)
+    val channelOwner = new ChannelOwnerImpl(cs)
     val consumer = mockFunction[Delivery, Unit]
 
     val QUEUE_NAME: String = "queue name"
