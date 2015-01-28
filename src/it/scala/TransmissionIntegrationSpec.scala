@@ -6,6 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
 
@@ -17,7 +18,11 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     val factory = new ConnectionFactory()
     factory.setUri(amqpUri)
     factory.useSslProtocol()
-    ConnectionHolder.Builder(factory, ExecutionContext.global, eventHooks = EventHooks(eventListener))
+    ConnectionHolder.Builder(
+      connectionFactory = factory,
+      executionContext = ExecutionContext.global, 
+      eventHooks = EventHooks(eventListener), 
+      reconnectionStrategy = ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
       .newConnectionHolder()
   }
 

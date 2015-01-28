@@ -41,7 +41,7 @@ class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAn
 
     val eventListener = mockFunction[Event, Unit]
     eventListener expects *
-    val connectionHolder = new ReconnectingConnectionHolder(factory, None, eventListener, synchronousExecutor, channelFactory)
+    val connectionHolder = new ReconnectingConnectionHolder(factory, eventListener, synchronousExecutor, channelFactory)
 
     eventListener expects ChannelEvent.ChannelOpened(1, None)
     connectionHolder.newChannel() // we wont keep the channel as we are pretending to be the channel at the moment

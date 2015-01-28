@@ -7,7 +7,7 @@ import io.relayr.amqp._
 import scala.concurrent.{ ExecutionContext, blocking }
 import scala.concurrent.duration._
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventConsumer: Event ⇒ Unit, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eventConsumer: Event ⇒ Unit, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -20,7 +20,8 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
       conn.addShutdownListener(new ShutdownListener {
         override def shutdownCompleted(cause: ShutdownSignalException): Unit = {
           eventConsumer(ConnectionEvent.ConnectionShutdown)
-          reconnectionStrategy.foreach(r ⇒ r.scheduleReconnection { reconnect() })
+          //          TODO : dynamic reconnection
+          //          reconnectionStrategy.scheduleReconnection { reconnect() }
         }
       })
       def recreateChannels(channelKeys: Iterable[ChannelKey]): Map[ChannelKey, Channel] = {

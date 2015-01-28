@@ -72,7 +72,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, execution
   }
 }
 
-private[connection] object ChannelOwnerImpl extends ChannelFactory {
+private[amqp] object ChannelOwnerImpl extends ChannelFactory {
   def apply(cs: ChannelSessionProvider, executionContext: ExecutionContext) = new ChannelOwnerImpl(cs, executionContext)
 }
 

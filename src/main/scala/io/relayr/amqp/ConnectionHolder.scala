@@ -20,6 +20,6 @@ object ConnectionHolder {
   case class Builder(
     connectionFactory: ConnectionFactory,
     executionContext: ExecutionContext,
-    reconnectionStrategy: Option[ReconnectionStrategy] = ReconnectionStrategy.default,
+    reconnectionStrategy: ReconnectionStrategy = ReconnectionStrategy.default,
     eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
 }
