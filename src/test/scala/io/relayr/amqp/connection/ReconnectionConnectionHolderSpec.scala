@@ -3,7 +3,7 @@ package io.relayr.amqp.connection
 import org.scalatest.{ Matchers, FlatSpec }
 
 class ReconnectionConnectionHolderSpec extends FlatSpec with Matchers {
-  "ReconnectionConnectionHolderSpec" should "be able to produce a channel" in {
+  "ReconnectionConnectionHolder" should "be able to produce a channel" in {
 
   }
 

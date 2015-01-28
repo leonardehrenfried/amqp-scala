@@ -21,5 +21,5 @@ object ConnectionHolder {
     connectionFactory: ConnectionFactory,
     executionContext: ExecutionContext,
     reconnectionStrategy: Option[ReconnectionStrategy] = ReconnectionStrategy.default,
-    eventHooks: EventHooks = EventHooks()) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
+    eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
 }

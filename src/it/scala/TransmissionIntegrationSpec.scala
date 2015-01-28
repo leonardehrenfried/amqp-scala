@@ -1,5 +1,6 @@
 import amqptest.EmbeddedAMQPBroker
 import com.rabbitmq.client.ConnectionFactory
+import io.relayr.amqp.Event.ChannelEvent
 import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
@@ -12,19 +13,26 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     initializeBroker()
   }
 
-  val chf = {
+  def connection(eventListener: Event ⇒ Unit) = {
     val factory = new ConnectionFactory()
     factory.setUri(amqpUri)
     factory.useSslProtocol()
-    ConnectionHolder.Builder(factory, ExecutionContext.global)
+    ConnectionHolder.Builder(factory, ExecutionContext.global, eventHooks = EventHooks(eventListener))
+      .newConnectionHolder()
   }
+
+  val serverEventListener = mockFunction[Event, Unit]
+  val clientEventListener = mockFunction[Event, Unit]
   
   var serverConnection: ConnectionHolder = null
   var clientConnection: ConnectionHolder = null
 
   override def beforeEach() = {
-    serverConnection = chf.newConnectionHolder()
-    clientConnection = chf.newConnectionHolder()
+    serverEventListener expects * // connection established event
+    clientEventListener expects *
+    
+    serverConnection = connection(serverEventListener)
+    clientConnection = connection(clientEventListener)
   }
   
   val testMessage: Message = Message("type", "encoding", ByteArray("test".getBytes))
@@ -33,12 +41,14 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     // create server connection and bind mock handler to queue
     val receiver = mockFunction[Delivery, Unit]
     val rpcServer = {
+      serverEventListener expects ChannelEvent.ChannelOpened(1, None)
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel(0).addConsumer(queue, true, receiver)
+      serverConnection.newChannel().addConsumer(queue, true, receiver)
     }
 
     // create client connection and bind to routing key
-    val senderChannel: ChannelOwner = clientConnection.newChannel(0)
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
     val destinationDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent)
 
     // define expectations

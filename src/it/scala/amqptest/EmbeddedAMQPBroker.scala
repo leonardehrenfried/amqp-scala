@@ -18,11 +18,12 @@ trait EmbeddedAMQPBroker {
 
   def brokerHttpPort = 9568
 
+  val brokerHost: String = "localhost"
+
   private def configFileName = "/test-config.json"
-
-
+  
   def amqpUri: String = {
-    s"amqp://guest:password@localhost:$brokerAmqpPort"
+    s"amqp://guest:password@$brokerHost:$brokerAmqpPort"
   }
 
   def makeHomeDir() = {

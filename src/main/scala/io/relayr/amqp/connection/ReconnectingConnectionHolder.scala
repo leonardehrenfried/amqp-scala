@@ -1,11 +1,13 @@
 package io.relayr.amqp.connection
 
 import com.rabbitmq.client._
-import io.relayr.amqp.{ ChannelOwner, ConnectionHolder, EventHooks, ReconnectionStrategy }
+import io.relayr.amqp.Event.{ ChannelEvent, ConnectionEvent }
+import io.relayr.amqp._
 
 import scala.concurrent.{ ExecutionContext, blocking }
+import scala.concurrent.duration._
 
-private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventHooks: EventHooks, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactory, reconnectionStrategy: Option[ReconnectionStrategy], eventConsumer: Event ⇒ Unit, implicit private val executionContext: ExecutionContext, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -14,8 +16,10 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
   private def reconnect(): Unit = this.synchronized {
     blocking {
       val conn = factory.newConnection()
+      eventConsumer(ConnectionEvent.ConnectionEstablished(conn.getAddress, conn.getPort, conn.getHeartbeat seconds))
       conn.addShutdownListener(new ShutdownListener {
         override def shutdownCompleted(cause: ShutdownSignalException): Unit = {
+          eventConsumer(ConnectionEvent.ConnectionShutdown)
           reconnectionStrategy.foreach(r ⇒ r.scheduleReconnection { reconnect() })
         }
       })
@@ -32,6 +36,11 @@ private[connection] class ReconnectingConnectionHolder(factory: ConnectionFactor
     val channel = conn.createChannel()
     // NOTE there may be other parameters possible to set up on the connection at the start
     qos.foreach(channel.basicQos)
+    eventConsumer(ChannelEvent.ChannelOpened(channel.getChannelNumber, qos))
+    channel.addReturnListener(new ReturnListener {
+      override def handleReturn(replyCode: Int, replyText: String, exchange: String, routingKey: String, properties: AMQP.BasicProperties, body: Array[Byte]): Unit =
+        eventConsumer(ChannelEvent.DeliveryFailed(replyCode, replyText, exchange, routingKey))
+    })
     channel
   }
 

@@ -2,9 +2,11 @@ package io.relayr.amqp.connection
 
 import java.util.concurrent.Executor
 
-import com.rabbitmq.client.ConnectionFactory
 import amqptest.EmbeddedAMQPBroker
-import io.relayr.amqp.{ChannelOwner, EventHooks}
+import com.rabbitmq.client.ConnectionFactory
+import io.relayr.amqp.Event.ChannelEvent
+import io.relayr.amqp.{ChannelOwner, Event}
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -13,7 +15,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
  * Tests that a connection can be set up to broker by the wrapper.
  * Probably only temporary until ReconnectingConnectionHolder is unit tested the rest of the stuff is available to run a complete integration test
  */
-class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAndAfterEach with EmbeddedAMQPBroker {
+class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
 
   override def beforeEach() {
     initializeBroker()
@@ -37,9 +39,12 @@ class ConnectionOnlyIntegrationSpec extends FlatSpec with Matchers with BeforeAn
       null: ChannelOwner // It wont be used anyway
     }
 
-    val connectionHolder = new ReconnectingConnectionHolder(factory, None, EventHooks(), synchronousExecutor, channelFactory)
+    val eventListener = mockFunction[Event, Unit]
+    eventListener expects *
+    val connectionHolder = new ReconnectingConnectionHolder(factory, None, eventListener, synchronousExecutor, channelFactory)
 
-    connectionHolder.newChannel(0) // we wont keep the channel as we are pretending to be the channel at the moment
+    eventListener expects ChannelEvent.ChannelOpened(1, None)
+    connectionHolder.newChannel() // we wont keep the channel as we are pretending to be the channel at the moment
     sessionProvider.withChannel(channel ⇒
       channel.isOpen should be (true)
     )
