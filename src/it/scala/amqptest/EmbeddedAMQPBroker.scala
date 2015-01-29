@@ -23,7 +23,7 @@ trait EmbeddedAMQPBroker {
   private def configFileName = "/test-config.json"
   
   def amqpUri: String = {
-    s"amqp://guest:password@$brokerHost:$brokerAmqpPort"
+    s"amqps://guest:password@$brokerHost:$brokerAmqpPort"
   }
 
   def makeHomeDir() = {

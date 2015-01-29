@@ -1,29 +1,23 @@
 import amqptest.EmbeddedAMQPBroker
-import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp.Event.ChannelEvent
 import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
 class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
-
+  
   override def beforeAll() {
     initializeBroker()
   }
 
-  def connection(eventListener: Event ⇒ Unit) = {
-    val factory = new ConnectionFactory()
-    factory.setUri(amqpUri)
-    factory.useSslProtocol()
-    ConnectionHolder.Builder(
-      connectionFactory = factory,
-      eventHooks = EventHooks(eventListener),
-      reconnectionStrategy = ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
-      .newConnectionHolder()
-  }
+  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.Builder(amqpUri)
+    .eventHooks(EventHooks(eventListener))
+    .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
+    .build()
 
   val serverEventListener = mockFunction[Event, Unit]
   val clientEventListener = mockFunction[Event, Unit]
@@ -47,13 +41,13 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val rpcServer = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel().rpcServer(queue)(rpcHandler)(ExecutionContext.global)
+      serverConnection.newChannel().rpcServer(queue)(rpcHandler)
     }
 
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val rpcClient = RPCClient(clientConnection.newChannel())
-    val rpcDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent)
+    val rpcDescriptor = Exchange.Default.route("test.queue", DeliveryMode.NotPersistent)
     val rpcMethod = rpcClient.newMethod(rpcDescriptor, 10 second)
 
     // define expectations

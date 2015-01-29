@@ -1,5 +1,4 @@
 import amqptest.EmbeddedAMQPBroker
-import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp.Event.ChannelEvent
 import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
@@ -13,16 +12,10 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     initializeBroker()
   }
 
-  def connection(eventListener: Event ⇒ Unit) = {
-    val factory = new ConnectionFactory()
-    factory.setUri(amqpUri)
-    factory.useSslProtocol()
-    ConnectionHolder.Builder(
-      connectionFactory = factory,
-      eventHooks = EventHooks(eventListener),
-      reconnectionStrategy = ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
-      .newConnectionHolder()
-  }
+  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.Builder(amqpUri)
+    .eventHooks(EventHooks(eventListener))
+    .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
+    .build()
 
   val serverEventListener = mockFunction[Event, Unit]
   val clientEventListener = mockFunction[Event, Unit]
