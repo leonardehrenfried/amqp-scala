@@ -2,10 +2,10 @@ package amqptest
 
 import java.io.{File, FileInputStream, FileOutputStream, InputStream}
 import java.net.{JarURLConnection, URL}
-import java.util.function.Consumer
-import java.util.jar.{JarEntry, JarFile}
 
 import sun.net.www.protocol.file.FileURLConnection
+
+import scala.collection.JavaConversions
 
 
 object ResourceCopy {
@@ -27,22 +27,18 @@ object ResourceCopy {
 
   // an example of crappy integration between java8 and scala
   def copyJarResourcesRecursively(connection: JarURLConnection, destination: File) = {
-    val jar: JarFile = connection.getJarFile
-    jar.stream().forEach(new Consumer[JarEntry] {
-      override def accept(t: JarEntry): Unit =
-        t match {
-          case nonmatch if !t.getName.startsWith(connection.getEntryName) ⇒
-          case inFile if !inFile.isDirectory ⇒
-            val destFile = new File(destination, t.getName.substring(connection.getEntryName.length))
-            val in = jar.getInputStream(inFile)
-            val out = new FileOutputStream(destFile)
-            streamAll(in, out)
-            in.close()
-            out.close()
-          case _ ⇒
-        }
+    val jarEntries = connection.getJarFile.entries()
+    JavaConversions.enumerationAsScalaIterator(jarEntries).foreach {
+      case nonmatch if !nonmatch.getName.startsWith(connection.getEntryName) ⇒
+      case inFile if !inFile.isDirectory ⇒
+        val destFile = new File(destination, inFile.getName.substring(connection.getEntryName.length))
+        val in = connection.getJarFile.getInputStream(inFile)
+        val out = new FileOutputStream(destFile)
+        streamAll(in, out)
+        in.close()
+        out.close()
+      case _ ⇒
     }
-    )
   }
 
   def streamAll(in: InputStream, out: FileOutputStream) {
