@@ -15,7 +15,7 @@ package object properties {
     def unapply(messageProperties: MessageProperties) =
       messageProperties.get(this)
 
-    override def toString: String = getClass.getTypeName.split('$')(2)
+    override def toString: String = getClass.getName.split('$')(2)
   }
 
   sealed abstract class BasicKey[V](bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder)
