@@ -41,4 +41,13 @@ class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
     bp.getCorrelationId should be ("correlation id")
     bp.getAppId should be ("app id")
   }
+
+  it should "be extractable" in {
+    val mp = MessageProperties(
+      ContentType → "content type",
+      ContentEncoding → "encoding")
+
+    val ContentType(contentType) = mp
+    contentType should be ("content type")
+  }
 }

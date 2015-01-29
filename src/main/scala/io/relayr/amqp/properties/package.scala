@@ -11,6 +11,11 @@ package object properties {
   sealed abstract class Key[J, V](bs: BasicProperties.Builder ⇒ J ⇒ BasicProperties.Builder, val in: V ⇒ J, val out: J ⇒ V) {
     def builderSetter(builder: BasicProperties.Builder)(value: Any) =
       bs(builder)(in(value.asInstanceOf[V]))
+
+    def unapply(messageProperties: MessageProperties) =
+      messageProperties.get(this)
+
+    override def toString: String = getClass.getTypeName.split('$')(2)
   }
 
   sealed abstract class BasicKey[V](bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder)

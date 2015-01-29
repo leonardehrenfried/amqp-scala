@@ -3,8 +3,6 @@ package io.relayr.amqp
 import com.rabbitmq.client.ConnectionFactory
 import io.relayr.amqp.connection.ConnectionHolderFactory
 
-import scala.concurrent.ExecutionContext
-
 /** Holds a connection, the underlying connection may be replaced if it fails */
 trait ConnectionHolder {
   /** Create a new channel multiplexed over this connection */
@@ -19,7 +17,6 @@ trait ConnectionHolder {
 object ConnectionHolder {
   case class Builder(
     connectionFactory: ConnectionFactory,
-    executionContext: ExecutionContext,
     reconnectionStrategy: ReconnectionStrategy = ReconnectionStrategy.default,
-    eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks, executionContext)
+    eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory(connectionFactory, reconnectionStrategy, eventHooks)
 }

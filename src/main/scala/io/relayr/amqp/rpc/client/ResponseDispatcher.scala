@@ -34,7 +34,8 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
     correlationMap += (correlationId → promise)
     val timeoutFuture: CancellableFuture[Message] = scheduledExecutor.delayExecution(throw RPCTimeout())(timeout)
     promise.future.foreach(_ ⇒ timeoutFuture.cancel(mayInterruptIfRunning = false))
-    ResponseSpec(correlationId = correlationId, replyTo = replyQueueName, Future.firstCompletedOf(Seq(promise.future, timeoutFuture: Future[Message])))
+    ResponseSpec(correlationId = correlationId, replyTo = replyQueueName,
+      Future.firstCompletedOf(Seq(promise.future, timeoutFuture: Future[Message])))
   }
 
   private def nextUniqueCorrelationId: String = {

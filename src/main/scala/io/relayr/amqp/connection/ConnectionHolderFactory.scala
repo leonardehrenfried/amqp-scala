@@ -1,12 +1,10 @@
 package io.relayr.amqp.connection
 
 import com.rabbitmq.client.ConnectionFactory
-import io.relayr.amqp.ReconnectionStrategy.{ NoReconnect, JavaClientFixedReconnectDelay }
+import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
 import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
 
-import scala.concurrent.ExecutionContext
-
-private[amqp] class ConnectionHolderFactory(connectionFactory: ConnectionFactory, reconnectionStrategy: ReconnectionStrategy, eventHooks: EventHooks, executionContext: ExecutionContext) {
+private[amqp] class ConnectionHolderFactory(connectionFactory: ConnectionFactory, reconnectionStrategy: ReconnectionStrategy, eventHooks: EventHooks) {
   def newConnectionHolder(): ConnectionHolder = {
     reconnectionStrategy match {
       case NoReconnect ⇒ ()

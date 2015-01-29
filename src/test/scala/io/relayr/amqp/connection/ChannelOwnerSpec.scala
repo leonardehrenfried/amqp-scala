@@ -1,8 +1,10 @@
 package io.relayr.amqp.connection
 
+import com.rabbitmq.client.AMQP.BasicProperties.Builder
 import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{ AMQP, Channel, Consumer }
 import io.relayr.amqp._
+import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -48,15 +50,18 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
         val body: Array[Byte] = Array(1: Byte)
         consumer expects where {
           (delivery: Delivery) ⇒
-            delivery.message.equals(Message("type", "encoding", ByteArray(body))) &&
-              delivery.correlationId.equals("correlation")
+            delivery.message.body.equals(ByteArray(body)) &&
+              delivery.message.messageProperties.get(ContentType).equals(Some("type")) &&
+              delivery.message.messageProperties.get(ContentEncoding).equals(Some("encoding"))
+            delivery.correlationId.equals("correlation")
         }
 
-        val properties: AMQP.BasicProperties = mock[AMQP.BasicProperties]
-        properties.getContentType _ expects () returning "type"
-        properties.getContentEncoding _ expects () returning "encoding"
-        properties.getCorrelationId _ expects () returning "correlation"
-        properties.getReplyTo _ expects () returning "replyChannel"
+        val properties: AMQP.BasicProperties = new Builder()
+          .contentType("type")
+          .contentEncoding("encoding")
+          .correlationId("correlation")
+          .replyTo("replyChannel")
+          .build()
 
         javaConsumer.handleDelivery("", null, properties, body)
       }

@@ -38,7 +38,7 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
       "complete Future when response is received" in {
         val response = responseDispatcher.prepareResponse(1 second)
         val delivery = mock[Delivery]
-        val message: Message = Message("", "", ByteArray(Array()))
+        val message: Message = Message.JSONString("json")
         delivery.correlationId _ expects () returning response.correlationId
         delivery.message _ expects () returning message
         consumer(delivery)

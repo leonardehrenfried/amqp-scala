@@ -2,8 +2,11 @@ package io.relayr.amqp.connection
 
 import java.util.Date
 
-import com.rabbitmq.client._
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.{ AMQP, Envelope, DefaultConsumer }
+
 import io.relayr.amqp._
+import io.relayr.amqp.properties.Key
 import io.relayr.amqp.rpc.server.RPCServerImpl
 
 import scala.collection.JavaConversions
@@ -44,12 +47,10 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
   }
 
   private def addBasicProperties(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): AMQP.BasicProperties = {
-    basicProperties.builder()
-      .timestamp(new Date())
-      .contentEncoding(message.contentEncoding)
-      .contentType(message.contentType)
-      .deliveryMode(routingDescriptor.deliveryMode.value)
-      .build()
+    (MessageProperties(basicProperties) ++ message.messageProperties ++ (
+      Key.Timestamp → new Date(),
+      Key.DeliveryMode → routingDescriptor.deliveryMode.value
+    )).toBasicProperties
   }
 
   /**

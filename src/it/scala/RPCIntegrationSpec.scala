@@ -20,7 +20,6 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     factory.useSslProtocol()
     ConnectionHolder.Builder(
       connectionFactory = factory,
-      executionContext = ExecutionContext.global,
       eventHooks = EventHooks(eventListener),
       reconnectionStrategy = ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
       .newConnectionHolder()
@@ -40,7 +39,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     clientConnection = connection(clientEventListener)
   }
   
-  val testMessage: Message = Message("type", "encoding", ByteArray("test".getBytes))
+  val testMessage: Message = Message.String("request")
 
   "" should "make and fulfill RPCs" in {
     // create server connection and bind mock handler to queue
@@ -58,16 +57,18 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val rpcMethod = rpcClient.newMethod(rpcDescriptor, 10 second)
 
     // define expectations
-    rpcHandler expects testMessage onCall { message: Message ⇒
-      Future.successful(testMessage)
+    rpcHandler expects * onCall { message: Message ⇒
+      val Message.String(string) = message
+      string should be ("request")
+      Future.successful(Message.String("reply"))
     }
 
     // make RPC
     val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
-    val result: Message = Await.result(rpcResultFuture, atMost = 10 second)
-    
+    val Message.String(string) = Await.result(rpcResultFuture, atMost = 10 second)
+
     // check response
-    result should be (testMessage)
+    string should be ("reply")
     
     // stop the rpc server, detaching it from the queue
     rpcServer.close()

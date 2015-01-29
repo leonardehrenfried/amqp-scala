@@ -5,7 +5,6 @@ import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
@@ -20,8 +19,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     factory.useSslProtocol()
     ConnectionHolder.Builder(
       connectionFactory = factory,
-      executionContext = ExecutionContext.global, 
-      eventHooks = EventHooks(eventListener), 
+      eventHooks = EventHooks(eventListener),
       reconnectionStrategy = ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
       .newConnectionHolder()
   }
@@ -40,7 +38,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     clientConnection = connection(clientEventListener)
   }
   
-  val testMessage: Message = Message("type", "encoding", ByteArray("test".getBytes))
+  val testMessage: Message = Message.String("test")
 
   "" should "send and receive messages" in {
     // create server connection and bind mock handler to queue

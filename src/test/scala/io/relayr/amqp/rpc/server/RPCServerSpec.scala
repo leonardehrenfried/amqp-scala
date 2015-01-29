@@ -35,7 +35,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
 
     // when a message is relivered it should trigger the handler
     val delivery = mock[Delivery]
-    val msg: Message = Message("type", "encoding", ByteArray(Array()))
+    val msg: Message = Message.String("string")
     delivery.correlationId _ expects () returning correlationId
     delivery.replyTo _ expects () returning replyChannel
     delivery.message _ expects () returning msg

@@ -21,9 +21,10 @@ class RPCClientSpec extends FlatSpec with Matchers with MockFactory {
     val promise = Promise[Message]()
     responseController.prepareResponse _ expects (500 millis) returning ResponseSpec("correlation", "replyTo", promise.future)
 
-    outboundChannel.send _ expects (routingDescriptor, Message("type", "encoding", ByteArray(Array(1: Byte))), *) onCall { (RoutingDescriptor, Message, ps: BasicProperties) ⇒ assert(ps.getCorrelationId.equals("correlation") && ps.getReplyTo.equals("replyTo")) }
+    val message = Message.JSONString("json")
+    outboundChannel.send _ expects (routingDescriptor, message, *) onCall { (RoutingDescriptor, Message, ps: BasicProperties) ⇒ assert(ps.getCorrelationId.equals("correlation") && ps.getReplyTo.equals("replyTo")) }
 
-    val future: Future[Message] = method(Message("type", "encoding", ByteArray(Array(1: Byte))))
+    val future: Future[Message] = method(message)
 
     future should be (promise.future)
   }
