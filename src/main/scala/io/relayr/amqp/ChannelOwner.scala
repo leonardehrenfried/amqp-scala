@@ -12,8 +12,14 @@ trait ChannelOwner {
   def sendPublish(publish: Publish): Unit =
     send(publish.routingDescriptor, publish.message, publish.properties)
 
+  /**
+   * Listen to a queue, the consumer is responsible for acking the messages
+   */
   def addConsumerAckManual(queue: Queue, consumer: (Delivery, ManualAcker) ⇒ Unit): Closeable
 
+  /**
+   * Listens on the queue, automatically acknowledging messages and then passing them to the consumer
+   */
   def addConsumer(queue: Queue, consumer: Delivery ⇒ Unit): Closeable
 
   def declareQueue(queue: Queue): String

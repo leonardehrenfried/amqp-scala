@@ -7,7 +7,12 @@ import io.relayr.amqp._
 import scala.concurrent.{ ExecutionContext, Future }
 
 /**
- * Manages consuming from a queue, passing the messages to a handler, and returning the responses to the replyTo address
+ * Manages consuming from a queue, passing the messages to a handler, and returning the responses to the replyTo address.
+ *
+ * Acks: the request is acknowledged once the consumer thread has successfully returned (not when the future completes), an Exception will cause a reject but the message will not be requeued
+ *
+ * TODO: add configuration of ack strategy
+ *
  * @param channelOwner used both for listening and for sending replies
  * @param listenQueue description of queue to receive requests on
  * @param executionContext to run the handler
@@ -17,15 +22,21 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
   private val responseExchange: ExchangePassive = Exchange.Default
   private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 
-  private val consumerCloser = channelOwner.addConsumer(listenQueue, requestConsumer)
+  private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
 
-  private def requestConsumer(request: Delivery): Unit =
-    executionContext.prepare().execute(new RPCRunnable(request))
-  private class RPCRunnable(request: Delivery) extends Runnable {
+  private def requestConsumer(request: Delivery, manualAcker: ManualAcker): Unit =
+    executionContext.prepare().execute(new RPCRunnable(request, manualAcker))
+
+  private class RPCRunnable(request: Delivery, manualAcker: ManualAcker) extends Runnable {
     override def run(): Unit = {
-      for (result ← handler(request.message)) {
-        val responseRoute: RoutingDescriptor = responseExchange.route(request.replyTo, deliveryMode)
-        channelOwner.send(responseRoute, result, new Builder().correlationId(request.correlationId).build())
+      try {
+        for (result ← handler(request.message)) {
+          val responseRoute: RoutingDescriptor = responseExchange.route(request.replyTo, deliveryMode)
+          channelOwner.send(responseRoute, result, new Builder().correlationId(request.correlationId).build())
+        }
+        manualAcker.ack()
+      } catch {
+        case e: Exception ⇒ manualAcker.reject(requeue = false)
       }
     }
   }
