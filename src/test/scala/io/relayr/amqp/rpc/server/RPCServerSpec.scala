@@ -2,8 +2,8 @@ package io.relayr.amqp.rpc.server
 
 import java.util.concurrent.Executor
 
-import com.rabbitmq.client.BasicProperties
 import io.relayr.amqp._
+import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
@@ -19,36 +19,37 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
   })
 
   "RPCServer" should "register a consumer" in {
-    (channelOwner.addConsumerAckManual(_: Queue, _: (Delivery, ManualAcker) ⇒ Unit)) expects (queue, *)
+    (channelOwner.addConsumerAckManual(_: Queue, _: (Message, ManualAcker) ⇒ Unit)) expects (queue, *)
     new RPCServerImpl(channelOwner, queue, synchronousExecutor, handler)
   }
 
   it should "call the handler when a message comes in on the listener and correctly reply with the response" in {
     val replyChannel: String = "reply channel"
     val correlationId: String = "correlation id"
-    var consumer: (Delivery, ManualAcker) ⇒ Unit = null
-    (channelOwner.addConsumerAckManual(_: Queue, _: (Delivery, ManualAcker) ⇒ Unit)) expects (queue, *) onCall { (_, _consumer) ⇒
+    var consumer: (Message, ManualAcker) ⇒ Unit = null
+    (channelOwner.addConsumerAckManual(_: Queue, _: (Message, ManualAcker) ⇒ Unit)) expects (queue, *) onCall { (_, _consumer) ⇒
       consumer = _consumer
       mock[Closeable]
     }
     val rpcServer = new RPCServerImpl(channelOwner, queue, synchronousExecutor, handler)
 
     // when a message is relivered it should trigger the handler
-    val delivery = mock[Delivery]
     val manualAcker = mock[ManualAcker]
-    val msg: Message = Message.String("string")
-    delivery.correlationId _ expects () returning correlationId
-    delivery.replyTo _ expects () returning replyChannel
-    delivery.message _ expects () returning msg
+    val msg: Message = Message.String("string").withProperties(
+      CorrelationId → correlationId,
+      ReplyTo → replyChannel)
     val resultPromise = Promise[Message]()
     handler expects msg returning resultPromise.future
     manualAcker.ack _ expects ()
-    consumer(delivery, manualAcker)
+    consumer(msg, manualAcker)
 
     // when the handler's result is completed, the reply shouldbe sent
-    channelOwner.send _ expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), msg, *) onCall {
-      (RoutingDescriptor, Message, props: BasicProperties) ⇒
-        assert(props.getCorrelationId == correlationId)
+    channelOwner.send _ expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), *) onCall {
+      (RoutingDescriptor, m: Message) ⇒
+        assert(m.messageProperties === msg.messageProperties)
+        val Message.String(string) = m
+        assert(string == "string")
+        assert(m.property(CorrelationId).equals(Some(correlationId)) && m.property(ReplyTo).equals(Some(replyChannel)))
     }
     resultPromise.success(msg)
   }

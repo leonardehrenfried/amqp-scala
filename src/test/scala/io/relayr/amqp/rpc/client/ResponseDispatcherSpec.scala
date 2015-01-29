@@ -2,6 +2,7 @@ package io.relayr.amqp.rpc.client
 
 import io.relayr.amqp._
 import io.relayr.amqp.concurrent.ScheduledExecutor
+import io.relayr.amqp.properties.Key.CorrelationId
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -14,8 +15,8 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
     "first created and created listening queue" should {
       val channel = mock[ChannelOwner]
       channel.declareQueue _ expects QueueDeclare(None) returning "queue name"
-      var consumer: Delivery ⇒ Unit = null
-      (channel.addConsumer(_: Queue, _: Delivery ⇒ Unit)) expects (QueuePassive("queue name"), *) onCall { (_, _consumer) ⇒
+      var consumer: Message ⇒ Unit = null
+      (channel.addConsumer(_: Queue, _: Message ⇒ Unit)) expects (QueuePassive("queue name"), *) onCall { (_, _consumer) ⇒
         consumer = _consumer
         mock[Closeable]
       }
@@ -37,11 +38,8 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
 
       "complete Future when response is received" in {
         val response = responseDispatcher.prepareResponse(1 second)
-        val delivery = mock[Delivery]
-        val message: Message = Message.JSONString("json")
-        delivery.correlationId _ expects () returning response.correlationId
-        delivery.message _ expects () returning message
-        consumer(delivery)
+        val message = Message.JSONString("json").withProperties(CorrelationId → response.correlationId)
+        consumer(message)
         Await.result(response.response, 1 second) should be (message)
       }
 

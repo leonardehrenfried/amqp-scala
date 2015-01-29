@@ -4,7 +4,7 @@ import com.rabbitmq.client.AMQP.BasicProperties.Builder
 import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{ Envelope, AMQP, Channel, Consumer }
 import io.relayr.amqp._
-import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
+import io.relayr.amqp.properties.Key.{ CorrelationId, ContentEncoding, ContentType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
@@ -17,7 +17,7 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
       override def withChannel[T](expression: (Channel) ⇒ T): T = expression(channel)
     }
     val channelOwner = new ChannelOwnerImpl(cs)
-    val consumer = mockFunction[Delivery, Unit]
+    val consumer = mockFunction[Message, Unit]
 
     val QUEUE_NAME: String = "queue name"
 
@@ -50,11 +50,11 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
 
         val body: Array[Byte] = Array(1: Byte)
         consumer expects where {
-          (delivery: Delivery) ⇒
-            delivery.message.body.equals(ByteArray(body)) &&
-              delivery.message.messageProperties.get(ContentType).equals(Some("type")) &&
-              delivery.message.messageProperties.get(ContentEncoding).equals(Some("encoding"))
-            delivery.correlationId.equals("correlation")
+          (delivery: Message) ⇒
+            delivery.body.equals(ByteArray(body)) &&
+              delivery.property(ContentType).equals(Some("type")) &&
+              delivery.property(ContentEncoding).equals(Some("encoding")) &&
+              delivery.property(CorrelationId).equals(Some("correlation"))
         }
 
         val properties: AMQP.BasicProperties = new Builder()
@@ -68,7 +68,7 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
       }
 
       "build Deliveries with manualAck" in {
-        val manualConsumer = mockFunction[Delivery, ManualAcker, Unit]
+        val manualConsumer = mockFunction[Message, ManualAcker, Unit]
 
         channel.queueDeclarePassive _ expects QUEUE_NAME returning new DeclareOk(QUEUE_NAME, 1, 1)
         (channel.basicConsume: (String, Boolean, Consumer) ⇒ String) expects (QUEUE_NAME, false, *) onCall { (String, Boolean, c: Consumer) ⇒ javaConsumer = c; "" }
@@ -77,13 +77,13 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
 
         val body: Array[Byte] = Array(1: Byte)
         manualConsumer expects where {
-          (delivery: Delivery, acker: ManualAcker) ⇒
+          (delivery: Message, acker: ManualAcker) ⇒
             acker.ack() // sends ack & nack, just to test both
             acker.reject(requeue = false)
-            delivery.message.body.equals(ByteArray(body)) &&
-              delivery.message.messageProperties.get(ContentType).equals(Some("type")) &&
-              delivery.message.messageProperties.get(ContentEncoding).equals(Some("encoding"))
-            delivery.correlationId.equals("correlation")
+            delivery.body.equals(ByteArray(body)) &&
+              delivery.property(ContentType).equals(Some("type")) &&
+              delivery.property(ContentEncoding).equals(Some("encoding")) &&
+              delivery.property(CorrelationId).equals(Some("correlation"))
         }
 
         channel.basicAck _ expects (2001L, false)

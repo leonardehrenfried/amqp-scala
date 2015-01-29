@@ -28,6 +28,14 @@ class MessageProperties(private val props: Map[Key[_, _], Any]) {
     new MessageProperties(props ++ elems)
 
   override def toString: String = "MessageProperties(" + props.toString + ")"
+
+  override def equals(other: Any): Boolean = other match {
+    case that: MessageProperties ⇒
+      props == that.props
+    case _ ⇒ false
+  }
+
+  override def hashCode(): Int = props.hashCode()
 }
 
 object MessageProperties {

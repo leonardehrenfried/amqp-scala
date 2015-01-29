@@ -2,6 +2,8 @@ package io.relayr.amqp
 
 import java.nio.charset.Charset
 
+import com.rabbitmq.client.AMQP
+import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 
 object Message {
@@ -10,9 +12,12 @@ object Message {
   def apply(messageProperties: MessageProperties, body: ByteArray) =
     new Message(messageProperties, body)
 
+  def apply(properties: AMQP.BasicProperties, body: Array[Byte]): Message =
+    Message(MessageProperties(properties), ByteArray(body))
+
   def unapply(message: Message): Option[(String, String, ByteArray)] = for {
-    contentType ← message.messageProperties.get(ContentType)
-    contentEncoding ← message.messageProperties.get(ContentEncoding)
+    contentType ← message.property(ContentType)
+    contentEncoding ← message.property(ContentEncoding)
   } yield (contentType, contentEncoding, message.body)
 
   object JSONString {
@@ -20,8 +25,8 @@ object Message {
       new Message(MessageProperties(ContentType → "application/json", ContentEncoding → utf8), ByteArray(string, Charset.forName(utf8)))
 
     def unapply(message: Message): Option[String] = for {
-      contentType ← message.messageProperties.get(ContentType) if contentType equals "application/json"
-      contentEncoding ← message.messageProperties.get(ContentEncoding)
+      contentType ← message.property(ContentType) if contentType equals "application/json"
+      contentEncoding ← message.property(ContentEncoding)
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
 
@@ -35,13 +40,18 @@ object Message {
       new Message(MessageProperties(ContentEncoding → utf8), ByteArray(string, Charset.forName(utf8)))
 
     def unapply(message: Message): Option[String] = for {
-      contentEncoding ← message.messageProperties.get(ContentEncoding)
+      contentEncoding ← message.property(ContentEncoding)
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
 }
 
 /** Message blob with content headers */
 class Message(val messageProperties: MessageProperties, val body: ByteArray) {
+  def withProperties(elems: (Key[_, _], Any)*) = new Message(messageProperties ++ (elems: _*), body)
+
+  def property[V](key: properties.Key[_, V]) = messageProperties.get(key)
+  def header(key: String): Option[AnyRef] = property(properties.Key.Headers).map(_(key))
+
   override def toString: String = s"Message($messageProperties, ${body.toString()})"
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Message]

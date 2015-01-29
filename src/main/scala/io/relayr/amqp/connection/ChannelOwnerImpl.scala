@@ -27,11 +27,11 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
   override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
     new RPCServerImpl(this, listenQueue, ec, handler)
 
-  override def addConsumerAckManual(queue: Queue, consumer: (Delivery, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
+  override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-        consumer(Delivery(properties, body), new ManualAcker {
+        consumer(Message(properties, body), new ManualAcker {
           override def reject(requeue: Boolean): Unit = channel.basicReject(envelope.getDeliveryTag, requeue)
 
           override def ack(): Unit = channel.basicAck(envelope.getDeliveryTag, false)
@@ -41,11 +41,11 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
     new ConsumerCloser(consumerTag)
   }
 
-  override def addConsumer(queue: Queue, consumer: Delivery ⇒ Unit): Closeable = withChannel { channel ⇒
+  override def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-        consumer(Delivery(properties, body))
+        consumer(Message(properties, body))
       }
     })
     new ConsumerCloser(consumerTag)
@@ -55,12 +55,12 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
     ensureQueue(channel, queue)
   }
 
-  override def send(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): Unit = withChannel { channel ⇒
-    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, addBasicProperties(routingDescriptor, message, basicProperties), message.body.toArray)
+  override def send(routingDescriptor: RoutingDescriptor, message: Message): Unit = withChannel { channel ⇒
+    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, addBasicProperties(routingDescriptor, message), message.body.toArray)
   }
 
-  private def addBasicProperties(routingDescriptor: RoutingDescriptor, message: Message, basicProperties: AMQP.BasicProperties): AMQP.BasicProperties = {
-    (MessageProperties(basicProperties) ++ message.messageProperties ++ (
+  private def addBasicProperties(routingDescriptor: RoutingDescriptor, message: Message): AMQP.BasicProperties = {
+    (message.messageProperties ++ (
       Key.Timestamp → new Date(),
       Key.DeliveryMode → routingDescriptor.deliveryMode.value
     )).toBasicProperties

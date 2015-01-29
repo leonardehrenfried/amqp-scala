@@ -35,7 +35,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
 
   "" should "send and receive messages" in {
     // create server connection and bind mock handler to queue
-    val receiver = mockFunction[Delivery, Unit]
+    val receiver = mockFunction[Message, Unit]
     val serverCloser = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
@@ -48,7 +48,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     val destinationDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent)
 
     // define expectations
-    receiver expects * onCall { message: Delivery ⇒
+    receiver expects * onCall { message: Message ⇒
       ()
     }
 

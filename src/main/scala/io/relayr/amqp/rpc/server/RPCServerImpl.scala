@@ -1,8 +1,8 @@
 package io.relayr.amqp.rpc.server
 
-import com.rabbitmq.client.AMQP.BasicProperties.Builder
 import io.relayr.amqp.DeliveryMode.NotPersistent
 import io.relayr.amqp._
+import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -24,15 +24,18 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
 
   private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
 
-  private def requestConsumer(request: Delivery, manualAcker: ManualAcker): Unit =
+  private def requestConsumer(request: Message, manualAcker: ManualAcker): Unit =
     executionContext.prepare().execute(new RPCRunnable(request, manualAcker))
 
-  private class RPCRunnable(request: Delivery, manualAcker: ManualAcker) extends Runnable {
+  private class RPCRunnable(request: Message, manualAcker: ManualAcker) extends Runnable {
     override def run(): Unit = {
       try {
-        for (result ← handler(request.message)) {
-          val responseRoute: RoutingDescriptor = responseExchange.route(request.replyTo, deliveryMode)
-          channelOwner.send(responseRoute, result, new Builder().correlationId(request.correlationId).build())
+        for {
+          replyTo ← request.property(ReplyTo)
+          correlationId ← request.property(CorrelationId)
+        } for (result ← handler(request)) {
+          val responseRoute: RoutingDescriptor = responseExchange.route(replyTo, deliveryMode)
+          channelOwner.send(responseRoute, result.withProperties(CorrelationId → correlationId))
         }
         manualAcker.ack()
       } catch {

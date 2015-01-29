@@ -8,8 +8,8 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
 
   "Messages" should "be constructed properly from json strings" in {
     val m = Message.JSONString("json")
-    val ContentEncoding("UTF-8") = m.messageProperties
-    val ContentType("application/json") = m.messageProperties
+    m.property(ContentEncoding) should be (Some("UTF-8"))
+    m.property(ContentType) should be (Some("application/json"))
     val Message.JSONString(s) = m
     s should be ("json")
   }

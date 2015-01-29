@@ -1,7 +1,7 @@
 package io.relayr.amqp.rpc.client
 
-import com.rabbitmq.client.BasicProperties
 import io.relayr.amqp._
+import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
@@ -22,7 +22,11 @@ class RPCClientSpec extends FlatSpec with Matchers with MockFactory {
     responseController.prepareResponse _ expects (500 millis) returning ResponseSpec("correlation", "replyTo", promise.future)
 
     val message = Message.JSONString("json")
-    outboundChannel.send _ expects (routingDescriptor, message, *) onCall { (RoutingDescriptor, Message, ps: BasicProperties) ⇒ assert(ps.getCorrelationId.equals("correlation") && ps.getReplyTo.equals("replyTo")) }
+    outboundChannel.send _ expects (routingDescriptor, *) onCall { (RoutingDescriptor, m: Message) ⇒
+      val Message.JSONString(string) = m
+      assert(string == "json")
+      assert(m.property(CorrelationId).equals(Some("correlation")) && m.property(ReplyTo).equals(Some("replyTo")))
+    }
 
     val future: Future[Message] = method(message)
 

@@ -2,6 +2,7 @@ package io.relayr.amqp.rpc.client
 
 import io.relayr.amqp._
 import io.relayr.amqp.concurrent.{ CancellableFuture, ScheduledExecutor }
+import io.relayr.amqp.properties.Key.CorrelationId
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ Promise, Future }
@@ -20,10 +21,14 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
   @volatile private var callCounter: Long = 0L
   private val correlationMap = TrieMap[String, Promise[Message]]()
 
-  private def consumer(delivery: Delivery): Unit =
-    correlationMap.remove(delivery.correlationId) match {
-      case Some(promise) ⇒ promise.success(delivery.message)
-      case None          ⇒ // TODO probably just create an event
+  private def consumer(message: Message): Unit =
+    message.messageProperties.get(CorrelationId) match {
+      case Some(correlationId) ⇒
+        correlationMap.remove(correlationId) match {
+          case Some(promise) ⇒ promise.success(message)
+          case None          ⇒ // TODO probably just create an event
+        }
+      case None ⇒
     }
 
   listenChannel.addConsumer(QueuePassive(replyQueueName), consumer)
