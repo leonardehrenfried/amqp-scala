@@ -26,7 +26,7 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
       case None          ⇒ // TODO probably just create an event
     }
 
-  listenChannel.addConsumer(QueuePassive(replyQueueName), autoAck = false, consumer)
+  listenChannel.addConsumer(QueuePassive(replyQueueName), consumer)
 
   override def prepareResponse(timeout: FiniteDuration): ResponseSpec = {
     val correlationId: String = nextUniqueCorrelationId

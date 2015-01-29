@@ -2,15 +2,14 @@ package io.relayr.amqp.connection
 
 import java.util.Date
 
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.{ AMQP, Envelope, DefaultConsumer }
-
+import com.rabbitmq.client.{ AMQP, Channel, DefaultConsumer, Envelope }
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.rpc.server.RPCServerImpl
 
 import scala.collection.JavaConversions
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.language.higherKinds
 
 /**
  * Provides different use cases for a channel
@@ -28,9 +27,23 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
   override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
     new RPCServerImpl(this, listenQueue, ec, handler)
 
-  override def addConsumer(queue: Queue, autoAck: Boolean, consumer: (Delivery) ⇒ Unit): Closeable = withChannel { channel ⇒
+  override def addConsumerAckManual(queue: Queue, consumer: (Delivery, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
-    val consumerTag = channel.basicConsume(queueName, autoAck, new DefaultConsumer(channel) {
+    val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
+      override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
+        consumer(Delivery(properties, body), new ManualAcker {
+          override def reject(requeue: Boolean): Unit = channel.basicReject(envelope.getDeliveryTag, requeue)
+
+          override def ack(): Unit = channel.basicAck(envelope.getDeliveryTag, false)
+        })
+      }
+    })
+    new ConsumerCloser(consumerTag)
+  }
+
+  override def addConsumer(queue: Queue, consumer: Delivery ⇒ Unit): Closeable = withChannel { channel ⇒
+    val queueName = ensureQueue(channel, queue)
+    val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
         consumer(Delivery(properties, body))
       }

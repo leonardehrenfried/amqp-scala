@@ -7,7 +7,7 @@ import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
-import scala.concurrent.{ Promise, ExecutionContextExecutor, Future, ExecutionContext }
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future, Promise }
 
 class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
   val channelOwner = mock[ChannelOwner]
@@ -19,7 +19,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
   })
 
   "RPCServer" should "register a consumer" in {
-    channelOwner.addConsumer _ expects (queue, true, *)
+    (channelOwner.addConsumer(_: Queue, _: Delivery ⇒ Unit)) expects (queue, *)
     new RPCServerImpl(channelOwner, queue, synchronousExecutor, handler)
   }
 
@@ -27,7 +27,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     val replyChannel: String = "reply channel"
     val correlationId: String = "correlation id"
     var consumer: Delivery ⇒ Unit = null
-    channelOwner.addConsumer _ expects (queue, true, *) onCall { (_, _, _consumer) ⇒
+    (channelOwner.addConsumer(_: Queue, _: Delivery ⇒ Unit)) expects (queue, *) onCall { (_, _consumer) ⇒
       consumer = _consumer
       mock[Closeable]
     }

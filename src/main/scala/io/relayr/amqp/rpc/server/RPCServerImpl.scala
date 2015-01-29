@@ -17,7 +17,7 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
   private val responseExchange: ExchangePassive = Exchange.Default
   private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 
-  private val consumerCloser = channelOwner.addConsumer(listenQueue, autoAck = true, requestConsumer)
+  private val consumerCloser = channelOwner.addConsumer(listenQueue, requestConsumer)
 
   private def requestConsumer(request: Delivery): Unit =
     executionContext.prepare().execute(new RPCRunnable(request))

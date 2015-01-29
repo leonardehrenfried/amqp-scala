@@ -36,10 +36,10 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
   "" should "send and receive messages" in {
     // create server connection and bind mock handler to queue
     val receiver = mockFunction[Delivery, Unit]
-    val rpcServer = {
+    val serverCloser = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel().addConsumer(queue, true, receiver)
+      serverConnection.newChannel().addConsumer(queue, receiver)
     }
 
     // create client connection and bind to routing key
@@ -56,6 +56,8 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     senderChannel.send(destinationDescriptor, testMessage)
     
     Thread.sleep(1000)
+    
+    serverCloser.close()
   }
   
   override def afterEach() = {
