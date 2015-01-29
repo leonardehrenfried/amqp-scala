@@ -4,8 +4,11 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.AMQP.BasicProperties.Builder
 import io.relayr.amqp.properties.Key
 
-class MessageProperties(props: Map[Key[_], Any]) {
-  def getOrNull[V](key: Key[V]): V = ???
+class MessageProperties(props: Map[Key[_, _], Any]) {
+  def getOrNull[J, V](key: Key[J, V]): J = {
+    val option: Option[J] = props.get(key).map(v ⇒ key.in(v.asInstanceOf[V]))
+    option.getOrElse(null).asInstanceOf[J]
+  }
 
   def toBasicProperties: BasicProperties = {
     val builder = new Builder()
@@ -18,5 +21,5 @@ class MessageProperties(props: Map[Key[_], Any]) {
 }
 
 object MessageProperties {
-  def apply(elems: (Key[_], Any)*): MessageProperties = new MessageProperties((Map.newBuilder[Key[_], Any] ++= elems).result())
+  def apply(elems: (Key[_, _], Any)*): MessageProperties = new MessageProperties((Map.newBuilder[Key[_, _], Any] ++= elems).result())
 }

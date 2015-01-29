@@ -7,29 +7,28 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import scala.collection.JavaConversions
 
 package object properties {
-  sealed abstract class Key[V](private val bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder) {
+
+  sealed abstract class Key[J, V](bs: BasicProperties.Builder ⇒ J ⇒ BasicProperties.Builder, val in: V ⇒ J, val out: J ⇒ V) {
     def builderSetter(builder: BasicProperties.Builder)(value: Any) =
-      bs(builder)(value.asInstanceOf[V])
+      bs(builder)(in(value.asInstanceOf[V]))
   }
 
-  sealed abstract class ConvertKey[V, R](bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder, in: R ⇒ V, out: V ⇒ R) extends Key[V](bs) {
-    override def builderSetter(builder: BasicProperties.Builder)(value: Any) =
-      bs(builder)(in(value.asInstanceOf[R]))
-  }
+  sealed abstract class BasicKey[V](bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder)
+    extends Key[V, V](bs, a ⇒ a, a ⇒ a)
 
   object Key {
-    object ContentType extends Key(_.contentType)
-    object ContentEncoding extends Key(_.contentEncoding)
-    object Type extends Key(_.`type`)
-    object Timestamp extends ConvertKey[Date, Date](_.timestamp, _.clone().asInstanceOf[Date], _.clone().asInstanceOf[Date]) ///
-    object MessageId extends Key(_.messageId)
-    object ReplyTo extends Key(_.replyTo)
-    object DeliveryMode extends Key(_.deliveryMode)
-    object UserId extends Key(_.userId)
-    object Expiration extends Key(_.expiration)
-    object Priority extends Key(_.priority)
-    object Headers extends ConvertKey[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, JavaConversions.mapAsJavaMap, JavaConversions.mapAsScalaMap[String, AnyRef] _ andThen (_.toMap)) //
-    object CorrelationId extends Key(_.correlationId)
-    object AppId extends Key(_.appId)
+    object ContentType extends BasicKey(_.contentType)
+    object ContentEncoding extends BasicKey(_.contentEncoding)
+    object Type extends BasicKey(_.`type`)
+    object Timestamp extends Key[Date, Date](_.timestamp, _.clone().asInstanceOf[Date], _.clone().asInstanceOf[Date]) ///
+    object MessageId extends BasicKey(_.messageId)
+    object ReplyTo extends BasicKey(_.replyTo)
+    object DeliveryMode extends BasicKey(_.deliveryMode)
+    object UserId extends BasicKey(_.userId)
+    object Expiration extends BasicKey(_.expiration)
+    object Priority extends BasicKey(_.priority)
+    object Headers extends Key[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, JavaConversions.mapAsJavaMap, JavaConversions.mapAsScalaMap[String, AnyRef] _ andThen (_.toMap)) //
+    object CorrelationId extends BasicKey(_.correlationId)
+    object AppId extends BasicKey(_.appId)
   }
 }
