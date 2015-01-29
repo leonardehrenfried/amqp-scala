@@ -26,3 +26,4 @@ scalariformSettings ++ Seq(
     .setPreference(PreserveSpaceBeforeArguments, true)
     .setPreference(RewriteArrowSymbols, true)
 )
+
