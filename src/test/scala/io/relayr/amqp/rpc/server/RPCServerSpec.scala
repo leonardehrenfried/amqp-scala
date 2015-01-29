@@ -46,7 +46,6 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     // when the handler's result is completed, the reply shouldbe sent
     channelOwner.send _ expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), *) onCall {
       (RoutingDescriptor, m: Message) ⇒
-        assert(m.messageProperties === msg.messageProperties)
         val Message.String(string) = m
         assert(string == "string")
         assert(m.property(CorrelationId).equals(Some(correlationId)) && m.property(ReplyTo).equals(Some(replyChannel)))

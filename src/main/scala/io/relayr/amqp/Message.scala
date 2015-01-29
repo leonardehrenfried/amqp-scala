@@ -43,6 +43,12 @@ object Message {
       contentEncoding ← message.property(ContentEncoding)
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
+
+  object Raw {
+    def unapply(message: Message): Option[(Array[Byte], AMQP.BasicProperties)] =
+      Some(message.body.toArray, message.messageProperties.toBasicProperties)
+  }
+
 }
 
 /** Message blob with content headers */

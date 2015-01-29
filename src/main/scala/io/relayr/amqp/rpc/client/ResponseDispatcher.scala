@@ -22,7 +22,7 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
   private val correlationMap = TrieMap[String, Promise[Message]]()
 
   private def consumer(message: Message): Unit =
-    message.messageProperties.get(CorrelationId) match {
+    message.property(CorrelationId) match {
       case Some(correlationId) ⇒
         correlationMap.remove(correlationId) match {
           case Some(promise) ⇒ promise.success(message)

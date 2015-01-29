@@ -56,14 +56,10 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
   }
 
   override def send(routingDescriptor: RoutingDescriptor, message: Message): Unit = withChannel { channel ⇒
-    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, addBasicProperties(routingDescriptor, message), message.body.toArray)
-  }
-
-  private def addBasicProperties(routingDescriptor: RoutingDescriptor, message: Message): AMQP.BasicProperties = {
-    (message.messageProperties ++ (
+    val Message.Raw(array, basicProperties) = message.withProperties(
       Key.Timestamp → new Date(),
-      Key.DeliveryMode → routingDescriptor.deliveryMode.value
-    )).toBasicProperties
+      Key.DeliveryMode → routingDescriptor.deliveryMode.value)
+    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, basicProperties, array)
   }
 
   /**
