@@ -23,5 +23,5 @@ trait ChannelOwner {
   def declareQueue(queue: Queue): String
 
   /** Adds a handler to respond to RPCs on a particular binding */
-  def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable
+  def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable
 }

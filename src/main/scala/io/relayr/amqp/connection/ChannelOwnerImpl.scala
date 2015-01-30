@@ -24,8 +24,8 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
    * @param handler function to call with RPC calls
    * @param ec executor for running the handler
    */
-  override def rpcServer(listenQueue: Queue)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
-    new RPCServerImpl(this, listenQueue, ec, handler)
+  override def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
+    new RPCServerImpl(this, listenQueue, ackMode, ec, handler)
 
   override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
@@ -55,11 +55,13 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
     ensureQueue(channel, queue)
   }
 
-  override def send(routingDescriptor: RoutingDescriptor, message: Message): Unit = withChannel { channel ⇒
-    val Message.Raw(array, basicProperties) = message.withProperties(
-      Key.Timestamp → new Date(),
-      Key.DeliveryMode → routingDescriptor.deliveryMode.value)
-    channel.basicPublish(routingDescriptor.exchange.name, routingDescriptor.routingKey, false, false, basicProperties, array)
+  override def send(route: RoutingDescriptor, message: Message): Unit = withChannel { channel ⇒
+    def timestampProperty = Key.Timestamp → new Date()
+    val Message.Raw(array, basicProperties) = route.deliveryMode match {
+      case Some(deliveryMode) ⇒ message.withProperties(timestampProperty, Key.DeliveryMode → deliveryMode)
+      case None               ⇒ message.withProperties(timestampProperty)
+    }
+    channel.basicPublish(route.exchange.name, route.routingKey, route.mandatory, route.immediate, basicProperties, array)
   }
 
   /**

@@ -28,7 +28,7 @@ package object properties {
     object Timestamp extends Key[Date, Date](_.timestamp, _.clone().asInstanceOf[Date], _.clone().asInstanceOf[Date]) ///
     object MessageId extends BasicKey(_.messageId)
     object ReplyTo extends BasicKey(_.replyTo)
-    object DeliveryMode extends BasicKey(_.deliveryMode)
+    object DeliveryMode extends Key[Integer, DeliveryMode](_.deliveryMode, _.value, i ⇒ io.relayr.amqp.DeliveryMode.apply(i.intValue))
     object UserId extends BasicKey(_.userId)
     object Expiration extends BasicKey(_.expiration)
     object Priority extends BasicKey(_.priority)

@@ -15,7 +15,10 @@ sealed trait Exchange
 /** Describes an exchange which should already exist, an error is thrown if it does not */
 case class ExchangePassive(name: String) extends Exchange {
   def route(routingKey: String, deliveryMode: DeliveryMode) =
-    RoutingDescriptor(this, routingKey, deliveryMode)
+    RoutingDescriptor(this, routingKey, Some(deliveryMode))
+
+  def route(routingKey: String) =
+    RoutingDescriptor(this, routingKey)
 }
 
 /** Parameters to create a new exchange */

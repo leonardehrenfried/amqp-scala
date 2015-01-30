@@ -18,14 +18,17 @@ import scala.concurrent.{ ExecutionContext, Future }
  * @param executionContext to run the handler
  * @param handler handles incoming messages
  */
-private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends Closeable {
+private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends Closeable {
   private val responseExchange: ExchangePassive = Exchange.Default
   private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 
   private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
 
-  private def requestConsumer(request: Message, manualAcker: ManualAcker): Unit =
+  private def requestConsumer(request: Message, manualAcker: ManualAcker): Unit = {
+    if (ackMode == RpcServerAutoAckMode.AckOnReceive)
+      manualAcker.ack()
     executionContext.prepare().execute(new RPCRunnable(request, manualAcker))
+  }
 
   private class RPCRunnable(request: Message, manualAcker: ManualAcker) extends Runnable {
     override def run(): Unit = {
@@ -33,15 +36,28 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
         for {
           replyTo ← request.property(ReplyTo)
           correlationId ← request.property(CorrelationId)
-        } for (result ← handler(request)) {
-          val responseRoute: RoutingDescriptor = responseExchange.route(replyTo, deliveryMode)
-          channelOwner.send(responseRoute, result.withProperties(CorrelationId → correlationId))
-        }
-        manualAcker.ack()
+        } for (result ← handler(request))
+          onSuccessResponse(replyTo, correlationId, result)
+        onHandled()
       } catch {
-        case e: Exception ⇒ manualAcker.reject(requeue = false)
+        case e: Exception ⇒ onHandleException(e)
       }
     }
+
+    def onHandleException(e: Exception) =
+      if (ackMode == RpcServerAutoAckMode.AckOnHandled || ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)
+        manualAcker.reject(requeue = false)
+
+    def onSuccessResponse(replyTo: String, correlationId: String, result: Message) {
+      if (ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)
+        manualAcker.ack()
+      val responseRoute: RoutingDescriptor = responseExchange.route(replyTo, deliveryMode)
+      channelOwner.send(responseRoute, result.withProperties(CorrelationId → correlationId))
+    }
+
+    def onHandled() =
+      if (ackMode == RpcServerAutoAckMode.AckOnHandled)
+        manualAcker.ack()
   }
 
   override def close(): Unit = consumerCloser.close()

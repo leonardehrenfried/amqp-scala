@@ -2,6 +2,7 @@ package io.relayr.amqp
 
 import java.util.Date
 
+import io.relayr.amqp.DeliveryMode.Persistent
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key._
 import org.scalamock.scalatest.MockFactory
@@ -18,7 +19,7 @@ class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
       Timestamp → date,
       MessageId → "message id",
       ReplyTo → "reply to",
-      Key.DeliveryMode → 3,
+      Key.DeliveryMode → Persistent,
       UserId → "user id",
       Expiration → "expiration",
       Priority → 2,
@@ -33,7 +34,7 @@ class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
     bp.getTimestamp should be (date)
     bp.getMessageId should be ("message id")
     bp.getReplyTo should be ("reply to")
-    bp.getDeliveryMode should be (3)
+    bp.getDeliveryMode should be (2)
     bp.getUserId should be ("user id")
     bp.getExpiration should be ("expiration")
     bp.getPriority should be (2)

@@ -39,7 +39,8 @@ class MessageProperties(private val props: Map[Key[_, _], Any]) {
 }
 
 object MessageProperties {
-  def apply(elems: (Key[_, _], Any)*): MessageProperties = new MessageProperties((Map.newBuilder[Key[_, _], Any] ++= elems.filterNot(_._2 == null)).result())
+  def apply(elems: (Key[_, _], Any)*): MessageProperties =
+    new MessageProperties((Map.newBuilder[Key[_, _], Any] ++= elems.filterNot(_._2 == null)).result())
 
   def apply(bp: BasicProperties): MessageProperties = MessageProperties(
     ContentType → bp.getContentType,

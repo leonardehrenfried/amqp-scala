@@ -1,5 +1,6 @@
 import amqptest.EmbeddedAMQPBroker
 import io.relayr.amqp.Event.ChannelEvent
+import io.relayr.amqp.RpcServerAutoAckMode.AckOnHandled
 import io.relayr.amqp._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
@@ -41,7 +42,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     val rpcServer = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
       val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel().rpcServer(queue)(rpcHandler)
+      serverConnection.newChannel().rpcServer(queue, AckOnHandled)(rpcHandler)
     }
 
     // create client connection and bind to routing key

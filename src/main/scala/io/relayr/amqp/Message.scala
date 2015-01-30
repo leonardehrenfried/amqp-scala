@@ -69,7 +69,7 @@ class Message(val messageProperties: MessageProperties, val body: ByteArray) {
   def withProperties(elems: (Key[_, _], Any)*) = new Message(messageProperties ++ (elems: _*), body)
 
   /**
-   * Get a property value from the message 
+   * Get a property value from the message
    * @tparam V type of value
    */
   def property[V](key: properties.Key[_, V]) = messageProperties.get(key)
