@@ -30,7 +30,19 @@ object Message {
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
 
+  object OctetStream {
+    def apply(array: Array[Byte]) =
+      new Message(MessageProperties(ContentType → "application/octet-stream"), ByteArray(array))
+
+    def unapply(message: Message): Option[Array[Byte]] = for {
+      contentType ← message.property(ContentType) if contentType equals "application/json"
+    } yield message.body.toArray
+  }
+
   object Array {
+    def apply(array: Array[Byte]) =
+      new Message(MessageProperties(), ByteArray(array))
+
     def unapply(message: Message): Option[Array[Byte]] =
       Some(message.body.toArray)
   }
