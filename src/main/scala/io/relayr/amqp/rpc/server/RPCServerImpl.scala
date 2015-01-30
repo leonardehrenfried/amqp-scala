@@ -1,6 +1,5 @@
 package io.relayr.amqp.rpc.server
 
-import io.relayr.amqp.DeliveryMode.NotPersistent
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
 
@@ -18,9 +17,8 @@ import scala.concurrent.{ ExecutionContext, Future }
  * @param executionContext to run the handler
  * @param handler handles incoming messages
  */
-private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message]) extends Closeable {
+private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message], responseParameters: ResponseParameters) extends Closeable {
   private val responseExchange: ExchangePassive = Exchange.Default
-  private val deliveryMode: NotPersistent.type = DeliveryMode.NotPersistent
 
   private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
 
@@ -51,7 +49,7 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
     def onSuccessResponse(replyTo: String, correlationId: String, result: Message) {
       if (ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)
         manualAcker.ack()
-      val responseRoute: RoutingDescriptor = responseExchange.route(replyTo, deliveryMode)
+      val responseRoute: RoutingDescriptor = responseExchange.route(replyTo, mandatory = responseParameters.mandatory, immediate = responseParameters.immediate, deliveryMode = responseParameters.deliveryMode)
       channelOwner.send(responseRoute, result.withProperties(CorrelationId → correlationId))
     }
 
@@ -62,3 +60,6 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
 
   override def close(): Unit = consumerCloser.close()
 }
+
+/** The parts of the RoutingDescriptor which are not controlled by the request or server */
+case class ResponseParameters(mandatory: Boolean, immediate: Boolean, deliveryMode: Option[DeliveryMode])

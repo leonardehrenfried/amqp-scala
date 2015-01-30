@@ -5,7 +5,7 @@ import java.util.Date
 import com.rabbitmq.client.{ AMQP, Channel, DefaultConsumer, Envelope }
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key
-import io.relayr.amqp.rpc.server.RPCServerImpl
+import io.relayr.amqp.rpc.server.{ ResponseParameters, RPCServerImpl }
 
 import scala.collection.JavaConversions
 import scala.concurrent.{ ExecutionContext, Future }
@@ -24,8 +24,8 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
    * @param handler function to call with RPC calls
    * @param ec executor for running the handler
    */
-  override def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
-    new RPCServerImpl(this, listenQueue, ackMode, ec, handler)
+  override def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode, responseParameters: ResponseParameters)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
+    new RPCServerImpl(this, listenQueue, ackMode, ec, handler, responseParameters)
 
   override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)

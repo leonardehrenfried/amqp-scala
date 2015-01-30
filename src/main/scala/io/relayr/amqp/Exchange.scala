@@ -14,11 +14,14 @@ sealed trait Exchange
 
 /** Describes an exchange which should already exist, an error is thrown if it does not */
 case class ExchangePassive(name: String) extends Exchange {
-  def route(routingKey: String, deliveryMode: DeliveryMode) =
-    RoutingDescriptor(this, routingKey, Some(deliveryMode))
+  def route(routingKey: String, deliveryMode: DeliveryMode, mandatory: Boolean = false, immediate: Boolean = false) =
+    RoutingDescriptor(this, routingKey, Some(deliveryMode), mandatory = mandatory, immediate = immediate)
 
-  def route(routingKey: String) =
-    RoutingDescriptor(this, routingKey)
+  def route(routingKey: String, mandatory: Boolean, immediate: Boolean) =
+    RoutingDescriptor(this, routingKey, None, mandatory = mandatory, immediate = immediate)
+
+  def route(routingKey: String, mandatory: Boolean, immediate: Boolean, deliveryMode: Option[DeliveryMode]) =
+    RoutingDescriptor(this, routingKey, deliveryMode, mandatory = mandatory, immediate = immediate)
 }
 
 /** Parameters to create a new exchange */

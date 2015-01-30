@@ -1,5 +1,7 @@
 package io.relayr.amqp
 
+import io.relayr.amqp.rpc.server.ResponseParameters
+
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.higherKinds
 
@@ -23,5 +25,5 @@ trait ChannelOwner {
   def declareQueue(queue: Queue): String
 
   /** Adds a handler to respond to RPCs on a particular binding */
-  def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable
+  def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode, responseParameters: ResponseParameters = ResponseParameters(mandatory = false, immediate = false, None))(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable
 }

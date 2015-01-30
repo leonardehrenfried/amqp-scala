@@ -2,6 +2,7 @@ package io.relayr.amqp.rpc.server
 
 import java.util.concurrent.Executor
 
+import io.relayr.amqp.DeliveryMode.NotPersistent
 import io.relayr.amqp.RpcServerAutoAckMode.AckOnReceive
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
@@ -31,13 +32,13 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
       consumer = _consumer
       mock[Closeable]
     }
-    val rpcServer = new RPCServerImpl(channelOwner, queue, ackMode, synchronousExecutor, handler)
+    val rpcServer = new RPCServerImpl(channelOwner, queue, ackMode, synchronousExecutor, handler, ResponseParameters(false, false, Some(NotPersistent)))
     (rpcServer, consumer)
   }
 
   "RPCServer" should "register a consumer" in {
     (channelOwner.addConsumerAckManual(_: Queue, _: (Message, ManualAcker) ⇒ Unit)) expects (queue, *)
-    new RPCServerImpl(channelOwner, queue, AckOnReceive, synchronousExecutor, handler)
+    new RPCServerImpl(channelOwner, queue, AckOnReceive, synchronousExecutor, handler, ResponseParameters(false, false, None))
   }
 
   it should "call the handler when a message comes in on the listener and correctly reply with the response" in {
