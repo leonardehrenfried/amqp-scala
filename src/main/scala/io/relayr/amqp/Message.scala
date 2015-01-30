@@ -6,20 +6,14 @@ import com.rabbitmq.client.AMQP
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 
+/** Message blob with content headers, usually you would use the child objects to construct / extract different types of messages */
 object Message {
   private val utf8 = "UTF-8"
 
   def apply(messageProperties: MessageProperties, body: ByteArray) =
     new Message(messageProperties, body)
 
-  def apply(properties: AMQP.BasicProperties, body: Array[Byte]): Message =
-    Message(MessageProperties(properties), ByteArray(body))
-
-  def unapply(message: Message): Option[(String, String, ByteArray)] = for {
-    contentType ← message.property(ContentType)
-    contentEncoding ← message.property(ContentEncoding)
-  } yield (contentType, contentEncoding, message.body)
-
+  /** Constructor / extractor for JSON messages, content-type is set to "application/json" and charset is defaulted to UTF-8 */
   object JSONString {
     def apply(string: String): Message =
       new Message(MessageProperties(ContentType → "application/json", ContentEncoding → utf8), ByteArray(string, Charset.forName(utf8)))
@@ -30,6 +24,7 @@ object Message {
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
 
+  /** Constructor / extractor for plain bytes, the same as Array, but content-type is set to "application/octet-stream" */
   object OctetStream {
     def apply(array: Array[Byte]) =
       new Message(MessageProperties(ContentType → "application/octet-stream"), ByteArray(array))
@@ -39,6 +34,7 @@ object Message {
     } yield message.body.toArray
   }
 
+  /** Constructor / extractor for plain bytes, with no properties set */
   object Array {
     def apply(array: Array[Byte]) =
       new Message(MessageProperties(), ByteArray(array))
@@ -47,6 +43,7 @@ object Message {
       Some(message.body.toArray)
   }
 
+  /** Constructor / extractor for String,  no content-type is set and charset is defaulted to UTF-8 */
   object String {
     def apply(string: String): Message =
       new Message(MessageProperties(ContentEncoding → utf8), ByteArray(string, Charset.forName(utf8)))
@@ -56,7 +53,11 @@ object Message {
     } yield message.body.decodeString(Charset.forName(contentEncoding))
   }
 
+  /** Constructor / extractor for working directly with the fields of the underlying java client */
   object Raw {
+    def apply(body: Array[Byte], properties: AMQP.BasicProperties): Message =
+      Message(MessageProperties(properties), ByteArray(body))
+
     def unapply(message: Message): Option[(Array[Byte], AMQP.BasicProperties)] =
       Some(message.body.toArray, message.messageProperties.toBasicProperties)
   }
@@ -67,7 +68,15 @@ object Message {
 class Message(val messageProperties: MessageProperties, val body: ByteArray) {
   def withProperties(elems: (Key[_, _], Any)*) = new Message(messageProperties ++ (elems: _*), body)
 
+  /**
+   * Get a property value from the message 
+   * @tparam V type of value
+   */
   def property[V](key: properties.Key[_, V]) = messageProperties.get(key)
+
+  /**
+   * Get a header value from the message
+   */
   def header(key: String): Option[AnyRef] = property(properties.Key.Headers).map(_(key))
 
   override def toString: String = s"Message($messageProperties, ${body.toString()})"

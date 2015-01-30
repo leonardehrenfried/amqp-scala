@@ -31,7 +31,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-        consumer(Message(properties, body), new ManualAcker {
+        consumer(Message.Raw(body, properties), new ManualAcker {
           override def reject(requeue: Boolean): Unit = channel.basicReject(envelope.getDeliveryTag, requeue)
 
           override def ack(): Unit = channel.basicAck(envelope.getDeliveryTag, false)
@@ -45,7 +45,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-        consumer(Message(properties, body))
+        consumer(Message.Raw(body, properties))
       }
     })
     new ConsumerCloser(consumerTag)
