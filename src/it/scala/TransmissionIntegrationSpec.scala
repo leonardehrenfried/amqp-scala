@@ -17,23 +17,27 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
     .build()
 
-  val serverEventListener = mockFunction[Event, Unit]
-  val clientEventListener = mockFunction[Event, Unit]
-  
-  var serverConnection: ConnectionHolder = null
-  var clientConnection: ConnectionHolder = null
 
-  override def beforeEach() = {
+  class TestContext {
+    val serverEventListener = mockFunction[Event, Unit]
+    val clientEventListener = mockFunction[Event, Unit]
+    
     serverEventListener expects * // connection established event
     clientEventListener expects *
-    
-    serverConnection = connection(serverEventListener)
-    clientConnection = connection(clientEventListener)
+
+    val serverConnection: ConnectionHolder = connection(serverEventListener)
+    val clientConnection: ConnectionHolder = connection(clientEventListener)
+
+    def closeConnections() = {
+      // close
+      serverConnection.close()
+      clientConnection.close()
+    }
   }
   
   val testMessage: Message = Message.String("test")
 
-  "" should "send and receive messages" in {
+  "" should "send and receive messages" in new TestContext {
     // create server connection and bind mock handler to queue
     val receiver = mockFunction[Message, Unit]
     val serverCloser = {
@@ -53,18 +57,77 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     }
 
     // send message
-    senderChannel.send(destinationDescriptor, testMessage)
+    senderChannel.sendPublish(Publish(destinationDescriptor, testMessage))
     
     Thread.sleep(1000)
     
     serverCloser.close()
+    closeConnections()
+  }
+
+  "mandatory message to non-existent queue" should "be returned" in new TestContext {
+    // create client connection and bind to routing key
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    clientEventListener expects where { (_: Event) match {
+      case ChannelEvent.MessageReturned(
+      312,
+      "No Route for message [Exchange: null, Routing key: non.existent.queue]",
+      "",
+      "non.existent.queue",
+      Message.String("test")) => true } }
+    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = true, immediate = false), testMessage)
+
+    Thread.sleep(1000)
+  }
+
+  "immediate message to non-existent queue" should "be returned" in new TestContext {
+    // create client connection and bind to routing key
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    clientEventListener expects where { (_: Event) match {
+      case ChannelEvent.MessageReturned(
+      312,
+      "No Route for message [Exchange: null, Routing key: non.existent.queue]",
+      "",
+      "non.existent.queue",
+      Message.String("test")) => true } }
+    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = false, immediate = true), testMessage)
+
+    Thread.sleep(1000)
+  }
+
+  "mandatory message to non-consumed queue" should "not be returned" in new TestContext {
+    // create client connection and bind to routing key
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    senderChannel.declareQueue(QueueDeclare(Some("non.consumed.queue")))
+    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = true, immediate = false), testMessage)
+
+    Thread.sleep(1000)
+  }
+
+  "immediate message to non-consumed queue" should "be returned" in new TestContext {
+    // create client connection and bind to routing key
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    senderChannel.declareQueue(QueueDeclare(Some("non.consumed.queue")))
+    clientEventListener expects where { (_: Event) match {
+      case ChannelEvent.MessageReturned(
+      313,
+      "Immediate delivery is not possible.",
+      "",
+      "non.consumed.queue",
+      Message.String("test")) => true } }
+    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage)
+
+    Thread.sleep(1000)
   }
   
-  override def afterEach() = {
-    // close
-    serverConnection.close()
-    clientConnection.close()
-  }
 
   override def afterAll() = {
     shutdownBroker()

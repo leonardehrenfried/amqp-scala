@@ -35,15 +35,20 @@ object Event {
 
     case class ConnectionEstablished(address: InetAddress, port: Int, heartbeatInterval: FiniteDuration) extends ConnectionEvent
 
-    object ConnectionShutdown extends ConnectionEvent
+    case object ConnectionShutdown extends ConnectionEvent
   }
 
   trait ChannelEvent extends Event
 
   object ChannelEvent {
 
+    /** Delivered when a channel is opened */
     case class ChannelOpened(channelNumber: Int, qos: Option[Int]) extends ChannelEvent
 
-    case class DeliveryFailed(replyCode: Int, replyText: String, exchange: String, routingKey: String) extends ChannelEvent
+    /** Delivered when a channel is closed, there is information about what was closed, how and why available but we haven't investigated extracting it */
+    case object ChannelShutdown extends ChannelEvent
+
+    /* Delivered when a message is returned as undelivered */
+    case class MessageReturned(replyCode: Int, replyText: String, exchange: String, routingKey: String, message: Message) extends ChannelEvent
   }
 }

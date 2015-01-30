@@ -3,6 +3,7 @@ package io.relayr.amqp.connection
 import com.rabbitmq.client._
 import io.relayr.amqp.Event.{ ChannelEvent, ConnectionEvent }
 import io.relayr.amqp._
+import io.relayr.amqp.connection.Listeners._
 
 import scala.concurrent.blocking
 import scala.concurrent.duration._
@@ -17,13 +18,9 @@ private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eve
     blocking {
       val conn = factory.newConnection()
       eventConsumer(ConnectionEvent.ConnectionEstablished(conn.getAddress, conn.getPort, conn.getHeartbeat seconds))
-      conn.addShutdownListener(new ShutdownListener {
-        override def shutdownCompleted(cause: ShutdownSignalException): Unit = {
-          eventConsumer(ConnectionEvent.ConnectionShutdown)
-          //          TODO : dynamic reconnection
-          //          reconnectionStrategy.scheduleReconnection { reconnect() }
-        }
-      })
+      conn.addShutdownListener(shutdownListener(cause ⇒
+        eventConsumer(ConnectionEvent.ConnectionShutdown)
+      ))
       def recreateChannels(channelKeys: Iterable[ChannelKey]): Map[ChannelKey, Channel] = {
         channelKeys.map(channelKey ⇒
           (channelKey, createChannel(conn, channelKey.qos))
@@ -40,8 +37,11 @@ private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eve
     eventConsumer(ChannelEvent.ChannelOpened(channel.getChannelNumber, qos))
     channel.addReturnListener(new ReturnListener {
       override def handleReturn(replyCode: Int, replyText: String, exchange: String, routingKey: String, properties: AMQP.BasicProperties, body: Array[Byte]): Unit =
-        eventConsumer(ChannelEvent.DeliveryFailed(replyCode, replyText, exchange, routingKey))
+        eventConsumer(ChannelEvent.MessageReturned(replyCode, replyText, exchange, routingKey, Message.Raw(body, properties)))
     })
+    channel.addShutdownListener(shutdownListener(cause ⇒
+      eventConsumer(ChannelEvent.ChannelShutdown)
+    ))
     channel
   }
 
