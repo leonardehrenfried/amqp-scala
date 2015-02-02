@@ -8,6 +8,7 @@ import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 
 class ScheduledExecutorSpec extends FlatSpec with Matchers {
 
@@ -18,7 +19,8 @@ class ScheduledExecutorSpec extends FlatSpec with Matchers {
   }
 
   it should "not take too long" in {
-    val ready: Future[Unit] = Await.ready(executor.delayExecution(())(10 milliseconds), 50 milliseconds)
+    val execution: Future[Unit] = executor.delayExecution(())(10 milliseconds)
+    val ready: Future[Unit] = Await.ready(execution, 50 milliseconds)
     ready.isCompleted should be (true)
   }
 

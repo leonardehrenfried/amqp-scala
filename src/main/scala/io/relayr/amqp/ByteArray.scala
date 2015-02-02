@@ -29,6 +29,7 @@ class ByteArray(array: Array[Byte]) extends Traversable[Byte] {
 
 /** Produces an immutable array of bytes */
 object ByteArray {
+  def apply(bytes: Byte*): ByteArray = new ByteArray(bytes.toArray)
   def apply(array: Array[Byte]): ByteArray = new ByteArray(array)
   def apply(string: String, charset: Charset): ByteArray = new ByteArray(string.getBytes(charset))
 

@@ -14,6 +14,9 @@ object Message {
   def apply(messageProperties: MessageProperties, body: ByteArray) =
     new Message(messageProperties, body)
 
+  def unapply(message: Message): Option[(MessageProperties, ByteArray)] =
+    Some((message.messageProperties, message.body))
+
   /** Constructor / extractor for JSON messages, content-type is set to "application/json" and charset is defaulted to UTF-8 */
   object JSONString {
     def apply(string: String): Message =
@@ -36,7 +39,7 @@ object Message {
       ), ByteArray(array))
 
     def unapply(message: Message): Option[Array[Byte]] = for {
-      contentType ← message.property(ContentType) if contentType equals "application/json"
+      contentType ← message.property(ContentType) if contentType equals "application/octet-stream"
     } yield message.body.toArray
   }
 

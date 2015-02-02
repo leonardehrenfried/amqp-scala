@@ -21,8 +21,7 @@ object EventHooks {
 }
 
 trait EventHooks {
-  private[amqp] def event(event: Event): Unit
-
+  def event(event: Event): Unit
 }
 
 sealed trait Event

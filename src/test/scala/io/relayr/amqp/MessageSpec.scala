@@ -14,7 +14,34 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
     s should be ("json")
   }
 
-  it should "be constructed properly from arrays" in {
+  it should "be constructed properly from strings" in {
+    val m = Message.String("string")
+    m.property(ContentEncoding) should be (Some("UTF-8"))
+    m.property(ContentType) should be (None)
+    val Message.String(s) = m
+    s should be ("string")
+  }
 
+  it should "be constructed properly from octet streams" in {
+    val m = Message.OctetStream(Array(1: Byte, 2: Byte))
+    m.property(ContentEncoding) should be (None)
+    m.property(ContentType) should be (Some("application/octet-stream"))
+    val Message.OctetStream(s) = m
+    s should be (Array(1: Byte, 2: Byte))
+  }
+
+  it should "be constructed properly from arrays" in {
+    val m = Message.Array(Array(1: Byte, 2: Byte))
+    m.property(ContentEncoding) should be (None)
+    m.property(ContentType) should be (None)
+    val Message.Array(s) = m
+    s should be (Array(1: Byte, 2: Byte))
+  }
+
+  it should "be constructed properly from its parts" in {
+    val m = Message(MessageProperties(), ByteArray(1: Byte, 2: Byte))
+    val Message(p, s) = m
+    p should be (MessageProperties())
+    s should be (ByteArray(1: Byte, 2: Byte))
   }
 }
