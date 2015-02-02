@@ -39,7 +39,11 @@ class BasicPropertiesReadable(mp: MessageProperties) extends BasicProperties wit
   override def getContentEncoding: String = mp.getOrNull(ContentEncoding)
 }
 
+/**
+ * These are the unimplementaions of all the deprecated setters on the BasicProperties interface, we just have this trait to allow us to implement the methods above
+ */
 trait UndefinedSetters extends BasicProperties {
+  // $COVERAGE-OFF$
   override def setMessageId(messageId: String): Unit = NOT_DEFINED()
 
   override def setReplyTo(replyTo: String): Unit = NOT_DEFINED()
@@ -66,7 +70,8 @@ trait UndefinedSetters extends BasicProperties {
 
   override def setAppId(appId: String): Unit = NOT_DEFINED()
 
-  def NOT_DEFINED() {
+  private def NOT_DEFINED() {
     throw new NotImplementedError("Attempted set on immutable")
   }
+  // $COVERAGE-ON$
 }

@@ -9,6 +9,12 @@ import scala.collection.JavaConversions
 package object properties {
 
   sealed abstract class Key[J, V](bs: BasicProperties.Builder ⇒ J ⇒ BasicProperties.Builder, val in: V ⇒ J, val out: J ⇒ V) {
+    def convert(value: J): V =
+      if (value == null)
+        null.asInstanceOf[V]
+      else
+        out(value)
+
     def builderSetter(builder: BasicProperties.Builder)(value: Any) =
       bs(builder)(in(value.asInstanceOf[V]))
 

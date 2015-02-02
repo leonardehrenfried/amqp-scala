@@ -7,6 +7,7 @@ import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
+import io.relayr.amqp.MessageProperties.ArrowAssoc
 
 class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
 

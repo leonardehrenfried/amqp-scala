@@ -5,6 +5,7 @@ import java.nio.charset.Charset
 import com.rabbitmq.client.AMQP
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
+import io.relayr.amqp.MessageProperties.ArrowAssoc
 
 /** Message blob with content headers, usually you would use the child objects to construct / extract different types of messages */
 object Message {
@@ -16,7 +17,10 @@ object Message {
   /** Constructor / extractor for JSON messages, content-type is set to "application/json" and charset is defaulted to UTF-8 */
   object JSONString {
     def apply(string: String): Message =
-      new Message(MessageProperties(ContentType → "application/json", ContentEncoding → utf8), ByteArray(string, Charset.forName(utf8)))
+      new Message(MessageProperties(
+        ContentType -> "application/json",
+        ContentEncoding → utf8
+      ), ByteArray(string, Charset.forName(utf8)))
 
     def unapply(message: Message): Option[String] = for {
       contentType ← message.property(ContentType) if contentType equals "application/json"
@@ -27,7 +31,9 @@ object Message {
   /** Constructor / extractor for plain bytes, the same as Array, but content-type is set to "application/octet-stream" */
   object OctetStream {
     def apply(array: Array[Byte]) =
-      new Message(MessageProperties(ContentType → "application/octet-stream"), ByteArray(array))
+      new Message(MessageProperties(
+        ContentType → "application/octet-stream"
+      ), ByteArray(array))
 
     def unapply(message: Message): Option[Array[Byte]] = for {
       contentType ← message.property(ContentType) if contentType equals "application/json"
