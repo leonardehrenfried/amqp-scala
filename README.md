@@ -69,3 +69,6 @@ Send a message to "queue.name":
 channel.send(Exchange.Default.route("queue.name"), Message.String("message")
 ```
 
+## Contribution
+
+Pull Requests welcome as well as Github issues
