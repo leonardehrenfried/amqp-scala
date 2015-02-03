@@ -16,8 +16,38 @@ trait ConnectionHolder {
   def close()
 }
 
+trait ConnectionHolderBuilder {
+  def build(): ConnectionHolder
+
+  def requestedChannelMax(i: Int): ConnectionHolderBuilder
+  def requestedFrameMax(i: Int): ConnectionHolderBuilder
+  def requestedHeartbeat(i: Int): ConnectionHolderBuilder
+  def connectionTimeout(i: Int): ConnectionHolderBuilder
+  def shutdownTimeout(i: Int): ConnectionHolderBuilder
+  def clientProperties(m: Map[String, Object]): ConnectionHolderBuilder
+  def sharedExecutor(s: ExecutorService): ConnectionHolderBuilder
+  def threadFactory(s: ThreadFactory): ConnectionHolderBuilder
+  def socketConfigurator(i: SocketConfigurator): ConnectionHolderBuilder
+  def exceptionHandler(i: ExceptionHandler): ConnectionHolderBuilder
+  def topologyRecovery(i: Boolean): ConnectionHolderBuilder
+  def reconnectionStrategy(i: ReconnectionStrategy): ConnectionHolderBuilder
+  def eventHooks(i: EventHooks): ConnectionHolderBuilder
+}
+
+/**
+ * Create a connection using the builder:
+ * {{{
+ * val connection = ConnectionHolder.builder("amqps://guest:password@host:port")
+ *   .eventHooks(EventHooks(eventListener))
+ *   .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
+ *   .build()
+ * }}}
+ */
 object ConnectionHolder {
-  case class Builder(
+  def builder(uri: String): ConnectionHolderBuilder =
+    new Builder(uri)
+
+  private[amqp] case class Builder(
       _uri: String,
       _requestedChannelMax: Option[Int] = None,
       _requestedFrameMax: Option[Int] = None,
@@ -35,7 +65,7 @@ object ConnectionHolder {
       _topologyRecovery: Option[Boolean] = None,
       //      _networkRecoveryInterval: Option[Long] = None,
       _reconnectionStrategy: ReconnectionStrategy = ReconnectionStrategy.default,
-      _eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory {
+      _eventHooks: EventHooks = EventHooks(PartialFunction.empty)) extends ConnectionHolderFactory with ConnectionHolderBuilder {
 
     def requestedChannelMax(i: Int) = copy(_requestedChannelMax = Some(i))
     def requestedFrameMax(i: Int) = copy(_requestedFrameMax = Some(i))

@@ -27,19 +27,22 @@ package object properties {
   sealed abstract class BasicKey[V](bs: BasicProperties.Builder ⇒ V ⇒ BasicProperties.Builder)
     extends Key[V, V](bs, a ⇒ a, a ⇒ a)
 
+  /**
+   * Keys for Message properties
+   */
   object Key {
-    object ContentType extends BasicKey(_.contentType)
-    object ContentEncoding extends BasicKey(_.contentEncoding)
-    object Type extends BasicKey(_.`type`)
-    object Timestamp extends Key[Date, Date](_.timestamp, _.clone().asInstanceOf[Date], _.clone().asInstanceOf[Date]) ///
-    object MessageId extends BasicKey(_.messageId)
-    object ReplyTo extends BasicKey(_.replyTo)
-    object DeliveryMode extends Key[Integer, DeliveryMode](_.deliveryMode, _.value, i ⇒ io.relayr.amqp.DeliveryMode.apply(i.intValue))
-    object UserId extends BasicKey(_.userId)
-    object Expiration extends BasicKey(_.expiration)
-    object Priority extends BasicKey(_.priority)
-    object Headers extends Key[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, JavaConversions.mapAsJavaMap, JavaConversions.mapAsScalaMap[String, AnyRef] _ andThen (_.toMap)) //
-    object CorrelationId extends BasicKey(_.correlationId)
-    object AppId extends BasicKey(_.appId)
+    case object ContentType extends BasicKey(_.contentType)
+    case object ContentEncoding extends BasicKey(_.contentEncoding)
+    case object Type extends BasicKey(_.`type`)
+    case object Timestamp extends Key[Date, Date](_.timestamp, _.clone().asInstanceOf[Date], _.clone().asInstanceOf[Date]) ///
+    case object MessageId extends BasicKey(_.messageId)
+    case object ReplyTo extends BasicKey(_.replyTo)
+    case object DeliveryMode extends Key[Integer, DeliveryMode](_.deliveryMode, _.value, i ⇒ io.relayr.amqp.DeliveryMode.apply(i.intValue))
+    case object UserId extends BasicKey(_.userId)
+    case object Expiration extends BasicKey(_.expiration)
+    case object Priority extends BasicKey(_.priority)
+    case object Headers extends Key[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, JavaConversions.mapAsJavaMap, JavaConversions.mapAsScalaMap[String, AnyRef] _ andThen (_.toMap)) //
+    case object CorrelationId extends BasicKey(_.correlationId)
+    case object AppId extends BasicKey(_.appId)
   }
 }

@@ -8,6 +8,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
   
@@ -15,7 +16,7 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     initializeBroker()
   }
 
-  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.Builder(amqpUri)
+  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.builder(amqpUri)
     .eventHooks(EventHooks(eventListener))
     .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
     .build()

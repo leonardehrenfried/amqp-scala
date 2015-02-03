@@ -4,17 +4,23 @@ import java.net.InetAddress
 
 import scala.concurrent.duration.FiniteDuration
 
+/**
+ * Some basic strategies for handling events
+ */
 object EventHooks {
+  /** Event hook delegating to function */
   def apply(f: Event ⇒ Unit): EventHooks = new EventHooks {
     override def event(event: Event): Unit = f(event)
   }
 
+  /** Event hook delegating to partial function which ignores unhandled events */
   def apply(pf: PartialFunction[Event, Unit]): EventHooks = new EventHooks() {
     override def event(e: Event) =
       if (pf.isDefinedAt(e))
         pf(e)
   }
 
+  /** No-op event hook */
   def apply(): EventHooks = new EventHooks {
     override def event(event: Event): Unit = ()
   }
