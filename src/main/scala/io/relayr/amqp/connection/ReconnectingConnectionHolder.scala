@@ -7,6 +7,7 @@ import io.relayr.amqp.connection.Listeners._
 
 import scala.concurrent.blocking
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
 
@@ -61,7 +62,7 @@ private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eve
     ensuringConnection { c ⇒
       val key: ChannelKey = new ChannelKey(qos)
       currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
-      channelFactory(new InternalChannelSessionProvider(key))
+      channelFactory(new InternalChannelSessionProvider(key), eventConsumer)
     }
   }
 

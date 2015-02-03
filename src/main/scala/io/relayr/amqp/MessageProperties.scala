@@ -31,6 +31,9 @@ class MessageProperties(private val props: Map[Key[_, _], Any]) {
   def ++(elems: (Key[_, _], Any)*): MessageProperties =
     new MessageProperties(props ++ elems)
 
+  def +(elems: (Key[_, _], Any)): MessageProperties =
+    new MessageProperties(props + elems)
+
   override def toString: String = "MessageProperties(" + props.toString + ")"
 
   override def equals(other: Any): Boolean = other match {

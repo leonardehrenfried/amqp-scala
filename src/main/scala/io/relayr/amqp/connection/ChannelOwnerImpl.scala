@@ -15,7 +15,7 @@ import scala.language.higherKinds
  * Provides different use cases for a channel
  * @param cs provides the channel to be used for these strategies, after a reconnection of the underlying connection this channel would change
  */
-private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends ChannelOwner {
+private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventConsumer: Event ⇒ Unit) extends ChannelOwner {
   def withChannel[T]: ((Channel) ⇒ T) ⇒ T = cs.withChannel
 
   /**
@@ -25,7 +25,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
    * @param ec executor for running the handler
    */
   override def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode, responseParameters: ResponseParameters)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
-    new RPCServerImpl(this, listenQueue, ackMode, ec, handler, responseParameters)
+    new RPCServerImpl(this, listenQueue, ackMode, eventConsumer, ec, handler, responseParameters)
 
   override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
     val queueName = ensureQueue(channel, queue)
@@ -84,6 +84,6 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider) extends C
 }
 
 private[amqp] object ChannelOwnerImpl extends ChannelFactory {
-  def apply(cs: ChannelSessionProvider) = new ChannelOwnerImpl(cs)
+  def apply(cs: ChannelSessionProvider, eventConsumer: Event ⇒ Unit) = new ChannelOwnerImpl(cs, eventConsumer)
 }
 

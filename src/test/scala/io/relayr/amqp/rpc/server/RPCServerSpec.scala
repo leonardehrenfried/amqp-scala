@@ -3,6 +3,7 @@ package io.relayr.amqp.rpc.server
 import java.util.concurrent.Executor
 
 import io.relayr.amqp.DeliveryMode.NotPersistent
+import io.relayr.amqp.Event.HandlerError
 import io.relayr.amqp.RpcServerAutoAckMode.AckOnReceive
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
@@ -17,6 +18,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
   val queue = QueuePassive("queue name")
   val replyChannel = "reply channel"
   val correlationId = "correlation id"
+  val eventHandler = mockFunction[Event, Unit]
 
   val msg: Message = Message.String("string").withProperties(
     CorrelationId → correlationId,
@@ -32,13 +34,13 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
       consumer = _consumer
       mock[Closeable]
     }
-    val rpcServer = new RPCServerImpl(channelOwner, queue, ackMode, synchronousExecutor, handler, ResponseParameters(false, false, Some(NotPersistent)))
+    val rpcServer = new RPCServerImpl(channelOwner, queue, ackMode, eventHandler, synchronousExecutor, handler, ResponseParameters(false, false, Some(NotPersistent)))
     (rpcServer, consumer)
   }
 
   "RPCServer" should "register a consumer" in {
     (channelOwner.addConsumerAckManual(_: Queue, _: (Message, ManualAcker) ⇒ Unit)) expects (queue, *)
-    new RPCServerImpl(channelOwner, queue, AckOnReceive, synchronousExecutor, handler, ResponseParameters(false, false, None))
+    new RPCServerImpl(channelOwner, queue, AckOnReceive, eventHandler, synchronousExecutor, handler, ResponseParameters(false, false, None))
   }
 
   it should "call the handler when a message comes in on the listener and correctly reply with the response" in {
@@ -75,7 +77,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     }
     consumer(msg, acker)
 
-    // when the handler's result is completed, the reply shouldbe sent
+    // when the handler's result is completed, the reply should be sent
     channelOwner.send _ expects (*, *)
     resultPromise.success(msg)
   }
@@ -92,7 +94,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     }
     consumer(msg, acker)
 
-    // when the handler's result is completed, the reply shouldbe sent
+    // when the handler's result is completed, the reply should be sent
     channelOwner.send _ expects (*, *)
     resultPromise.success(msg)
   }
@@ -112,6 +114,66 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
       channelOwner.send _ expects (*, *)
       resultPromise.success(msg)
     }
+  }
+
+  it should "report errors and reject message for AckOnSuccessfulResponse on failed Future" in {
+    val (rpcServer, consumer) = createRpcServer(RpcServerAutoAckMode.AckOnSuccessfulResponse)
+
+    // when a message is delivered it should trigger the handler
+    val acker = mock[ManualAcker]
+    val resultPromise = Promise[Message]()
+    handler expects msg returning resultPromise.future
+    consumer(msg, acker)
+
+    val exception: Exception = new scala.Exception
+    eventHandler expects HandlerError(exception)
+    acker.reject _ expects false
+    resultPromise.failure(exception)
+  }
+
+  it should "report errors and reject message for AckOnHandled on handler exception thrown" in {
+    val (rpcServer, consumer) = createRpcServer(RpcServerAutoAckMode.AckOnHandled)
+
+    val acker = mock[ManualAcker]
+    val exception: Exception = new scala.Exception
+    handler expects msg throwing exception
+
+    eventHandler expects HandlerError(exception)
+    acker.reject _ expects false
+    consumer(msg, acker)
+  }
+
+  it should "report errors for AckOnReceive on failed future" in {
+    val (rpcServer, consumer) = createRpcServer(RpcServerAutoAckMode.AckOnReceive)
+
+    // when a message is delivered it should trigger the handler
+    val acker = mock[ManualAcker]
+    val resultPromise = Promise[Message]()
+    inSequence {
+      acker.ack _ expects ()
+      handler expects msg returning resultPromise.future
+    }
+    consumer(msg, acker)
+
+    val exception: Exception = new scala.Exception
+    eventHandler expects HandlerError(exception)
+    resultPromise.failure(exception)
+  }
+
+  it should "report errors for AckOnReceive on handler exception thrown" in {
+    val (rpcServer, consumer) = createRpcServer(RpcServerAutoAckMode.AckOnReceive)
+
+    // when a message is delivered it should trigger the handler
+    val acker = mock[ManualAcker]
+    val resultPromise = Promise[Message]()
+    val exception: Exception = new scala.Exception
+    inSequence {
+      acker.ack _ expects ()
+      handler expects msg throwing exception
+    }
+
+    eventHandler expects HandlerError(exception)
+    consumer(msg, acker)
   }
 
   it should "create a new queue if given a queue declare"

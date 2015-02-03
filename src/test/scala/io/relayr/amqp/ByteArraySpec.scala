@@ -2,11 +2,13 @@ package io.relayr.amqp
 
 import org.scalatest.{ FlatSpec, Matchers }
 
+import scala.language.postfixOps
+
 class ByteArraySpec extends FlatSpec with Matchers {
 
   "ByteArray" should "produce an array of what was put in" in {
-    val i = ByteArray(Array(1: Byte))
-    i.toArray should be (Array(1: Byte))
+    val ByteArray(copy) = ByteArray(Array(1: Byte))
+    copy should be (Array(1: Byte))
   }
 
   it should "not be mutatable by the producer" in {
@@ -14,7 +16,9 @@ class ByteArraySpec extends FlatSpec with Matchers {
     val i = ByteArray(m)
     m.update(0, 2)
     m should be (Array(2: Byte))
-    i.toArray should be (Array(1: Byte))
+    val ByteArray(copy) = i
+    copy should not be Array(2: Byte)
+    copy should be (Array(1: Byte))
   }
 
   it should "not be mutatable by the consumer" in {

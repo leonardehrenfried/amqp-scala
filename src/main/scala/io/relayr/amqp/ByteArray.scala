@@ -19,8 +19,7 @@ class ByteArray(array: Array[Byte]) extends Traversable[Byte] {
   }
 
   override def hashCode(): Int = {
-    val state = Seq(_array)
-    state.map(_.hashCode()).foldLeft(0)((a, b) ⇒ 31 * a + b)
+    _array.hashCode()
   }
 
   def decodeString(charset: Charset) =

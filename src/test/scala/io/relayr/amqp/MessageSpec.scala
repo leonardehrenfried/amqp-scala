@@ -1,5 +1,6 @@
 package io.relayr.amqp
 
+import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentType, ContentEncoding }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
@@ -43,5 +44,21 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
     val Message(p, s) = m
     p should be (MessageProperties())
     s should be (ByteArray(1: Byte, 2: Byte))
+  }
+
+  it should "extract properties" in {
+    val m = Message.String("string").withProperties(
+      Key.AppId → "app id"
+    )
+    m.property(Key.AppId) should be (Some("app id"))
+    m.property(Key.CorrelationId) should be (None)
+  }
+
+  it should "extract headers" in {
+    val m = Message.String("string").withHeaders(
+      "key" → "value"
+    )
+    m.header("key") should be (Some("value"))
+    m.header("notkey") should be (None)
   }
 }

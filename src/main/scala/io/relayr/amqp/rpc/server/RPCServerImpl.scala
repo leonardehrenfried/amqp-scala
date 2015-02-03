@@ -1,9 +1,11 @@
 package io.relayr.amqp.rpc.server
 
+import io.relayr.amqp.Event.HandlerError
 import io.relayr.amqp._
 import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 /**
  * Manages consuming from a queue, passing the messages to a handler, and returning the responses to the replyTo address.
@@ -17,7 +19,7 @@ import scala.concurrent.{ ExecutionContext, Future }
  * @param executionContext to run the handler
  * @param handler handles incoming messages
  */
-private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message], responseParameters: ResponseParameters) extends Closeable {
+private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, eventConsumer: Event ⇒ Unit, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message], responseParameters: ResponseParameters) extends Closeable {
   private val responseExchange: ExchangePassive = Exchange.Default
 
   private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
@@ -34,17 +36,27 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
         for {
           replyTo ← request.property(ReplyTo)
           correlationId ← request.property(CorrelationId)
-        } for (result ← handler(request))
-          onSuccessResponse(replyTo, correlationId, result)
+        } handler(request).andThen {
+          case Success(result) ⇒ onSuccessResponse(replyTo, correlationId, result)
+          case Failure(e)      ⇒ onFutureFailure(e)
+        }
         onHandled()
       } catch {
         case e: Exception ⇒ onHandleException(e)
       }
     }
 
-    def onHandleException(e: Exception) =
+    def onFutureFailure(e: Throwable) = {
+      eventConsumer(HandlerError(e))
+      if (ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)
+        manualAcker.reject(requeue = false)
+    }
+
+    def onHandleException(e: Throwable) = {
+      eventConsumer(HandlerError(e))
       if (ackMode == RpcServerAutoAckMode.AckOnHandled || ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)
         manualAcker.reject(requeue = false)
+    }
 
     def onSuccessResponse(replyTo: String, correlationId: String, result: Message) {
       if (ackMode == RpcServerAutoAckMode.AckOnSuccessfulResponse)

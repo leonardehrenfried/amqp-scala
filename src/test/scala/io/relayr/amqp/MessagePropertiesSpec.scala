@@ -3,11 +3,11 @@ package io.relayr.amqp
 import java.util.Date
 
 import io.relayr.amqp.DeliveryMode.Persistent
+import io.relayr.amqp.MessageProperties.ArrowAssoc
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
-import io.relayr.amqp.MessageProperties.ArrowAssoc
 
 class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
 
@@ -51,5 +51,25 @@ class MessagePropertiesSpec extends FlatSpec with Matchers with MockFactory {
 
     val ContentType(contentType) = mp
     contentType should be ("content type")
+  }
+
+  it should "extract or null" in {
+    val mp = MessageProperties(
+      ContentType → "content type",
+      ContentEncoding → "encoding")
+
+    mp.getOrNull(ContentEncoding) should be ("encoding")
+    mp.getOrNull(Priority) should be (null)
+  }
+
+  it should "be appendable" in {
+    val mp1 = MessageProperties(
+      ContentType → "content type")
+    val mp2 = MessageProperties(
+      ContentEncoding → "encoding")
+
+    mp1 ++ mp2 should be (MessageProperties(
+      ContentType → "content type",
+      ContentEncoding → "encoding"))
   }
 }

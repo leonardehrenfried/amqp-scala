@@ -16,7 +16,8 @@ class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
     val cs = new ChannelSessionProvider {
       override def withChannel[T](expression: (Channel) ⇒ T): T = expression(channel)
     }
-    val channelOwner = new ChannelOwnerImpl(cs)
+    val eventConsumer: Event ⇒ Unit = mockFunction[Event, Unit]
+    val channelOwner = new ChannelOwnerImpl(cs, eventConsumer)
     val consumer = mockFunction[Message, Unit]
 
     val QUEUE_NAME: String = "queue name"

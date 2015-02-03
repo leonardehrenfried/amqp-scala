@@ -3,9 +3,9 @@ package io.relayr.amqp
 import java.nio.charset.Charset
 
 import com.rabbitmq.client.AMQP
+import io.relayr.amqp.MessageProperties.ArrowAssoc
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
-import io.relayr.amqp.MessageProperties.ArrowAssoc
 
 /** Message blob with content headers, usually you would use the child objects to construct / extract different types of messages */
 object Message {
@@ -75,7 +75,13 @@ object Message {
 
 /** Message blob with content headers */
 class Message(val messageProperties: MessageProperties, val body: ByteArray) {
+  /** Creates a new Message with additional headers */
+  def withHeaders(elems: (String, AnyRef)*) = withProperties(properties.Key.Headers → (headers ++ elems))
+
+  /** Creates a new Message with additional properties */
   def withProperties(elems: (Key[_, _], Any)*) = new Message(messageProperties ++ (elems: _*), body)
+  /** Creates a new Message with additional properties */
+  def withProperties(elems: (Key[_, _], Any)) = new Message(messageProperties + elems, body)
 
   /**
    * Get a property value from the message
@@ -86,7 +92,9 @@ class Message(val messageProperties: MessageProperties, val body: ByteArray) {
   /**
    * Get a header value from the message
    */
-  def header(key: String): Option[AnyRef] = property(properties.Key.Headers).map(_(key))
+  def header(key: String): Option[AnyRef] = headers.get(key)
+
+  def headers: Map[String, AnyRef] = property(properties.Key.Headers).getOrElse(Map.empty)
 
   override def toString: String = s"Message($messageProperties, ${body.toString()})"
 

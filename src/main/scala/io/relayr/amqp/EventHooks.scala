@@ -28,7 +28,7 @@ sealed trait Event
 
 object Event {
 
-  trait ConnectionEvent extends Event
+  sealed trait ConnectionEvent extends Event
 
   object ConnectionEvent {
 
@@ -37,7 +37,7 @@ object Event {
     case object ConnectionShutdown extends ConnectionEvent
   }
 
-  trait ChannelEvent extends Event
+  sealed trait ChannelEvent extends Event
 
   object ChannelEvent {
 
@@ -50,4 +50,9 @@ object Event {
     /* Delivered when a message is returned as undelivered */
     case class MessageReturned(replyCode: Int, replyText: String, exchange: String, routingKey: String, message: Message) extends ChannelEvent
   }
+
+  sealed trait RPCServerEvent extends Event
+
+  /** Delivered when the RPC server handler throws an exception or the handler future fails */
+  case class HandlerError(e: Throwable) extends RPCServerEvent
 }
