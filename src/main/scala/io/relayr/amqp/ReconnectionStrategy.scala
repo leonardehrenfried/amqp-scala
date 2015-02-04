@@ -13,7 +13,7 @@ object ReconnectionStrategy {
   object NoReconnect extends ReconnectionStrategy
 
   /**
-   * Uses the underlying java client to attempt network recovery at a fixed interval 
+   * Uses the underlying java client to attempt network recovery at a fixed interval
    * @param networkRecoveryInterval duration between reconnection attempts, minimum resolution in millis
    */
   case class JavaClientFixedReconnectDelay(networkRecoveryInterval: FiniteDuration) extends ReconnectionStrategy
