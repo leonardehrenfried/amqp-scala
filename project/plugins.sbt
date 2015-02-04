@@ -10,3 +10,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.3.0")
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.4.0")
 
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0.BETA1")
+
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
