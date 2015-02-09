@@ -21,6 +21,19 @@ package object properties {
     def unapply(messageProperties: MessageProperties) =
       messageProperties.get(this)
 
+    /**
+     * Associates a key to it's value, this uses domain type from the scala library (type-checked).
+     * To use the domain type of the java library use `-&>` to also perform the automatic conversion
+     */
+    @inline def ->(y: V): (Key[J, V], V) = (this, y)
+    def →(y: V) = ->(y)
+
+    /**
+     * Associates a key to it's value, this uses domain type from the java library (type-checked).
+     * To use the domain type of the scala library use `->`
+     */
+    @inline def -&>(y: J): (Key[J, V], V) = (this, convert(y))
+
     override def toString: String = getClass.getName.split('$')(2)
   }
 

@@ -65,43 +65,5 @@ object MessageProperties {
     CorrelationId -&> bp.getCorrelationId,
     AppId -&> bp.getAppId
   )
-
-  /**
-   * Import arrow assoc to have type checking on MessageProperty map creation with `->` and type checking and conversion with `-&>`.
-   * The ArrowAssoc in Predef can be used to generate the MessageProperties but without conversion or Compile time checking.
-   *
-   * {{{
-   * MessageProperties(
-   *  ContentType -&> bp.getContentType,
-   *  ContentEncoding -&> bp.getContentEncoding,
-   *  Type -&> bp.getType,
-   *  Timestamp -&> bp.getTimestamp,
-   *  MessageId -&> bp.getMessageId,
-   *  ReplyTo -&> bp.getReplyTo,
-   *  Key.DeliveryMode -&> bp.getDeliveryMode,
-   *  UserId -&> bp.getUserId,
-   *  Expiration -&> bp.getExpiration,
-   *  Priority -&> bp.getPriority,
-   *  Headers -&> bp.getHeaders,
-   *  CorrelationId -&> bp.getCorrelationId,
-   *  AppId -&> bp.getAppId
-   * )
-   * }}}
-   */
-  implicit final class ArrowAssoc[J, V](val self: Key[J, V]) extends AnyVal {
-    /**
-     * Associates a key to it's value, this uses domain type from the scala library (type-checked).
-     * To use the domain type of the java library use `-&>` to also perform the automatic conversion
-     */
-    @inline def ->(y: V): Tuple2[Key[J, V], V] = Tuple2(self, y)
-    def →(y: V): Tuple2[Key[J, V], V] = ->(y)
-
-    /**
-     * Associates a key to it's value, this uses domain type from the java library (type-checked).
-     * To use the domain type of the scala library use `->`
-     */
-    @inline def -&>(y: J): Tuple2[Key[J, V], V] = Tuple2(self, self.convert(y))
-    //    def -&>(y: J): Tuple2[Key[J, V], V] = -&>(y)
-  }
 }
 

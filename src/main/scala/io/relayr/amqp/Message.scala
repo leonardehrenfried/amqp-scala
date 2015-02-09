@@ -3,7 +3,6 @@ package io.relayr.amqp
 import java.nio.charset.Charset
 
 import com.rabbitmq.client.AMQP
-import io.relayr.amqp.MessageProperties.ArrowAssoc
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 

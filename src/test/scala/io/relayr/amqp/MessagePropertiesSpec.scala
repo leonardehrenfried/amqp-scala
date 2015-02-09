@@ -3,7 +3,6 @@ package io.relayr.amqp
 import java.util.Date
 
 import io.relayr.amqp.DeliveryMode.Persistent
-import io.relayr.amqp.MessageProperties.ArrowAssoc
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key._
 import org.scalamock.scalatest.MockFactory
