@@ -1,43 +1,19 @@
-import amqptest.EmbeddedAMQPBroker
+import amqptest.AMQPIntegrationFixtures
 import io.relayr.amqp.Event.ChannelEvent
 import io.relayr.amqp.RpcServerAutoAckMode.AckOnHandled
 import io.relayr.amqp._
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
-  
-  override def beforeAll() {
-    initializeBroker()
-  }
-
-  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.builder(amqpUri)
-    .eventHooks(EventHooks(eventListener))
-    .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
-    .build()
-
-  val serverEventListener = mockFunction[Event, Unit]
-  val clientEventListener = mockFunction[Event, Unit]
-
-  var serverConnection: ConnectionHolder = null
-  var clientConnection: ConnectionHolder = null
-
-  override def beforeEach() = {
-    serverEventListener expects * // connection established event
-    clientEventListener expects *
-
-    serverConnection = connection(serverEventListener)
-    clientConnection = connection(clientEventListener)
-  }
+class RPCIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
   
   val testMessage: Message = Message.String("request")
 
-  "" should "make and fulfill RPCs" in {
+  "" should "make and fulfill RPCs" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
@@ -68,15 +44,5 @@ class RPCIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll 
     
     // stop the rpc server, detaching it from the queue
     rpcServer.close()
-  }
-  
-  override def afterEach() = {
-    // close
-    serverConnection.close()
-    clientConnection.close()
-  }
-
-  override def afterAll() = {
-    shutdownBroker()
   }
 }

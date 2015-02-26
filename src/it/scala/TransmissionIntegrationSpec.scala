@@ -1,44 +1,15 @@
-import amqptest.EmbeddedAMQPBroker
+import amqptest.AMQPIntegrationFixtures
 import io.relayr.amqp.Event.ChannelEvent
 import io.relayr.amqp._
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers}
 
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with EmbeddedAMQPBroker with MockFactory {
-
-  override def beforeAll() {
-    initializeBroker()
-  }
-
-  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.builder(amqpUri)
-    .eventHooks(EventHooks(eventListener))
-    .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
-    .build()
-
-
-  class TestContext {
-    val serverEventListener = mockFunction[Event, Unit]
-    val clientEventListener = mockFunction[Event, Unit]
-    
-    serverEventListener expects * // connection established event
-    clientEventListener expects *
-
-    val serverConnection: ConnectionHolder = connection(serverEventListener)
-    val clientConnection: ConnectionHolder = connection(clientEventListener)
-
-    def closeConnections() = {
-      // close
-      serverConnection.close()
-      clientConnection.close()
-    }
-  }
+class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
   
   val testMessage: Message = Message.String("test")
 
-  "" should "send and receive messages" in new TestContext {
+  "" should "send and receive messages" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
     val receiver = mockFunction[Message, Unit]
     val serverCloser = {
@@ -63,10 +34,9 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     Thread.sleep(1000)
     
     serverCloser.close()
-    closeConnections()
   }
 
-  "mandatory message to non-existent queue" should "be returned" in new TestContext {
+  "mandatory message to non-existent queue" should "be returned" in new ClientTestContext {
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -83,7 +53,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     Thread.sleep(1000)
   }
 
-  "immediate message to non-existent queue" should "be returned" in new TestContext {
+  "immediate message to non-existent queue" should "be returned" in new ClientTestContext {
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -100,7 +70,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     Thread.sleep(1000)
   }
 
-  "mandatory message to non-consumed queue" should "not be returned" in new TestContext {
+  "mandatory message to non-consumed queue" should "not be returned" in new ClientTestContext {
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -111,7 +81,7 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     Thread.sleep(1000)
   }
 
-  "immediate message to non-consumed queue" should "be returned" in new TestContext {
+  "immediate message to non-consumed queue" should "be returned" in new ClientTestContext {
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -127,10 +97,5 @@ class TransmissionIntegrationSpec  extends FlatSpec with Matchers with BeforeAnd
     senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage)
 
     Thread.sleep(1000)
-  }
-  
-
-  override def afterAll() = {
-    shutdownBroker()
   }
 }
