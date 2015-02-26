@@ -34,7 +34,7 @@ class MessageProperties(private val props: Map[Key[_, _], Any]) {
   def +(elems: (Key[_, _], Any)): MessageProperties =
     new MessageProperties(props + elems)
 
-  override def toString: String = "MessageProperties(" + props.toString + ")"
+  override def toString: String = props.mkString("MessageProperties(", ", ", ")")
 
   override def equals(other: Any): Boolean = other match {
     case that: MessageProperties ⇒

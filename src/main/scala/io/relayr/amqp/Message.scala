@@ -95,7 +95,12 @@ class Message(val messageProperties: MessageProperties, val body: ByteArray) {
 
   def headers: Map[String, AnyRef] = property(properties.Key.Headers).getOrElse(Map.empty)
 
-  override def toString: String = s"Message($messageProperties, ${body.toString()})"
+  private def bodyAsString: Option[String] = property(ContentEncoding).map(Charset.forName).map(body.decodeString)
+
+  override def toString: String = {
+    val bodyToString = bodyAsString.map('"' + _ + '"').getOrElse(body.length + " BYTES")
+    s"Message($messageProperties, body=$bodyToString)"
+  }
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Message]
 

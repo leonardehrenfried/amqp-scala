@@ -6,6 +6,8 @@ import java.nio.charset.Charset
 class ByteArray(array: Array[Byte]) extends Traversable[Byte] {
   private val _array = array.clone()
 
+  def length = array.length
+
   def toArray: Array[Byte] =
     _array.clone()
 

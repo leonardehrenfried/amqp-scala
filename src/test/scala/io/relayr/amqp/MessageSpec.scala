@@ -1,5 +1,7 @@
 package io.relayr.amqp
 
+import java.nio.charset.Charset
+
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentType, ContentEncoding }
 import org.scalamock.scalatest.MockFactory
@@ -60,5 +62,15 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
     )
     m.header("key") should be (Some("value"))
     m.header("notkey") should be (None)
+  }
+
+  they should "toString body to string if encoding is set" in {
+    val m = Message.String("string")
+    m.toString should be ("""Message(MessageProperties(ContentEncoding -> UTF-8), body="string")""")
+  }
+
+  they should "toString body no output with no encoding" in {
+    val m = Message.Array("string".getBytes(Charset.defaultCharset()))
+    m.toString should be ("""Message(MessageProperties(), body=6 BYTES)""")
   }
 }
