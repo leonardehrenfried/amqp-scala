@@ -13,8 +13,8 @@ private[amqp] class RPCClientImpl(publishChannel: ChannelOwner, responseControll
   class RPCMethodImpl(routingDescriptor: RoutingDescriptor, timeout: FiniteDuration) extends RPCMethod {
 
     override def apply(message: Message): Future[Message] = {
-      val ResponseSpec(correlationId, replyTo, response) = responseController.prepareResponse(timeout)
-      publishChannel.send(routingDescriptor, message.withProperties(CorrelationId → correlationId, ReplyTo → replyTo))
+      val ResponseSpec(correlationId, replyTo, response, onReturn) = responseController.prepareResponse(timeout)
+      publishChannel.send(routingDescriptor, message.withProperties(CorrelationId → correlationId, ReplyTo → replyTo), onReturn, timeout)
       response
     }
   }

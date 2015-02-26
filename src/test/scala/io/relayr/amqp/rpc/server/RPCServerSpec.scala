@@ -56,7 +56,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     consumer(msg, acker)
 
     // when the handler's result is completed, the reply shouldbe sent
-    channelOwner.send _ expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), *) onCall {
+    (channelOwner.send(_: RoutingDescriptor, _: Message)) expects (Exchange.Default.route(replyChannel, DeliveryMode.NotPersistent), *) onCall {
       (RoutingDescriptor, m: Message) ⇒
         val Message.String(string) = m
         assert(string == "string")
@@ -78,7 +78,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     consumer(msg, acker)
 
     // when the handler's result is completed, the reply should be sent
-    channelOwner.send _ expects (*, *)
+    (channelOwner.send(_: RoutingDescriptor, _: Message)) expects (*, *)
     resultPromise.success(msg)
   }
 
@@ -95,7 +95,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     consumer(msg, acker)
 
     // when the handler's result is completed, the reply should be sent
-    channelOwner.send _ expects (*, *)
+    (channelOwner.send(_: RoutingDescriptor, _: Message)) expects (*, *)
     resultPromise.success(msg)
   }
 
@@ -111,7 +111,7 @@ class RPCServerSpec extends FlatSpec with Matchers with MockFactory {
     // when the handler's result is completed, the reply should be sent
     inSequence {
       acker.ack _ expects ()
-      channelOwner.send _ expects (*, *)
+      (channelOwner.send(_: RoutingDescriptor, _: Message)) expects (*, *)
       resultPromise.success(msg)
     }
   }

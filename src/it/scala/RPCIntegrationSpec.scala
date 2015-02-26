@@ -45,4 +45,16 @@ class RPCIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixt
     // stop the rpc server, detaching it from the queue
     rpcServer.close()
   }
+  
+  "RPCClient" should "throw an exception if the target queue does not exist" in new ClientTestContext {
+    // create client connection and bind to routing key
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val rpcClient = RPCClient(clientConnection.newChannel())
+    val rpcDescriptor = Exchange.Default.route("non.existent.queue", mandatory = false, immediate = true)
+    val rpcMethod: RPCMethod = rpcClient.newMethod(rpcDescriptor, 10 second)
+
+    clientEventListener expects *    // make RPC
+    val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
+    intercept[UndeliveredException](Await.result(rpcResultFuture, atMost = 10 second))
+  }
 }

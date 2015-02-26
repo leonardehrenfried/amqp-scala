@@ -10,7 +10,7 @@ lazy val root = Project("rabbitmq-scala-client", file(".")).
     libraryDependencies ++= Seq(
       "org.apache.qpid" % "qpid-broker" % "0.30" % "it",
       "org.scalatest" %% "scalatest" % "2.2.1" % "it,test",
-      "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % "it,test",
+      "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % "it,test",
       "com.rabbitmq" % "amqp-client" % "3.4.2")).
   settings(publishSettings: _*).
   settings(Defaults.itSettings: _*)

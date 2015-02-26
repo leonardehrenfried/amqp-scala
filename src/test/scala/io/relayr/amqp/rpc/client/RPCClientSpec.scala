@@ -7,6 +7,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
+import scala.language.postfixOps
 
 class RPCClientSpec extends FlatSpec with Matchers with MockFactory {
 
@@ -19,10 +20,11 @@ class RPCClientSpec extends FlatSpec with Matchers with MockFactory {
     val method: RPCMethod = client.newMethod(routingDescriptor, 500 millis)
 
     val promise = Promise[Message]()
-    responseController.prepareResponse _ expects (500 millis) returning ResponseSpec("correlation", "replyTo", promise.future)
+    val onReturnCallback: () ⇒ Unit = () ⇒ ()
+    responseController.prepareResponse _ expects (500 millis) returning ResponseSpec("correlation", "replyTo", promise.future, onReturnCallback)
 
     val message = Message.JSONString("json")
-    outboundChannel.send _ expects (routingDescriptor, *) onCall { (RoutingDescriptor, m: Message) ⇒
+    (outboundChannel.send(_: RoutingDescriptor, _: Message, _: () ⇒ Unit, _: FiniteDuration)) expects (routingDescriptor, *, onReturnCallback, 500 millis) onCall { (RoutingDescriptor, m: Message, callback, timeout) ⇒
       val Message.JSONString(string) = m
       assert(string == "json")
       assert(m.property(CorrelationId).equals(Some("correlation")) && m.property(ReplyTo).equals(Some("replyTo")))

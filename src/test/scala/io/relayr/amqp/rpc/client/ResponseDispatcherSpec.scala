@@ -8,6 +8,7 @@ import org.scalatest.{ Matchers, WordSpecLike }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory {
 
@@ -20,7 +21,7 @@ class ResponseDispatcherSpec extends WordSpecLike with Matchers with MockFactory
         consumer = _consumer
         mock[Closeable]
       }
-      val responseDispatcher = new ResponseDispatcher(channel, new ScheduledExecutor(1))
+      val responseDispatcher = new ResponseDispatcher(channel, ScheduledExecutor.defaultScheduledExecutor)
 
       "return queue name as response replyTo" in {
         responseDispatcher.prepareResponse(1 second).replyTo should be ("queue name")

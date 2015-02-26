@@ -37,10 +37,14 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
     val correlationId: String = nextUniqueCorrelationId
     val promise: Promise[Message] = Promise()
     correlationMap += (correlationId → promise)
-    val timeoutFuture: CancellableFuture[Message] = scheduledExecutor.delayExecution(throw RPCTimeout())(timeout)
+    val timeoutFuture: CancellableFuture[Message] = scheduledExecutor.delayExecution {
+      correlationMap.remove(correlationId)
+      throw RPCTimeout()
+    }(timeout)
     promise.future.foreach(_ ⇒ timeoutFuture.cancel(mayInterruptIfRunning = false))
     ResponseSpec(correlationId = correlationId, replyTo = replyQueueName,
-      Future.firstCompletedOf(Seq(promise.future, timeoutFuture: Future[Message])))
+      Future.firstCompletedOf(Seq(promise.future, timeoutFuture: Future[Message])),
+      () ⇒ promise.failure(new UndeliveredException))
   }
 
   private def nextUniqueCorrelationId: String = {
@@ -55,6 +59,6 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
     correlationMap.size
 }
 
-private[client] case class ResponseSpec(correlationId: String, replyTo: String, response: Future[Message])
+private[client] case class ResponseSpec(correlationId: String, replyTo: String, response: Future[Message], onReturn: () ⇒ Unit)
 
 case class RPCTimeout() extends Throwable

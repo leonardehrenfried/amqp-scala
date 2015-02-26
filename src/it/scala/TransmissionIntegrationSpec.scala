@@ -4,6 +4,7 @@ import io.relayr.amqp._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.postfixOps
+import scala.concurrent.duration._
 
 class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
   
@@ -37,6 +38,8 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
   }
 
   "mandatory message to non-existent queue" should "be returned" in new ClientTestContext {
+    val onReturn = mockFunction[Unit]
+    
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -48,12 +51,15 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "",
       "non.existent.queue",
       Message.String("test")) => true } }
-    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = true, immediate = false), testMessage)
+    onReturn expects()
+    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
 
   "immediate message to non-existent queue" should "be returned" in new ClientTestContext {
+    val onReturn = mockFunction[Unit]
+    
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -65,23 +71,28 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "",
       "non.existent.queue",
       Message.String("test")) => true } }
-    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = false, immediate = true), testMessage)
+    onReturn expects()
+    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
 
   "mandatory message to non-consumed queue" should "not be returned" in new ClientTestContext {
+    val onReturn = mockFunction[Unit]
+    
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
 
     senderChannel.declareQueue(QueueDeclare(Some("non.consumed.queue")))
-    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = true, immediate = false), testMessage)
+    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
 
   "immediate message to non-consumed queue" should "be returned" in new ClientTestContext {
+    val onReturn = mockFunction[Unit]
+    
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -94,7 +105,8 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "",
       "non.consumed.queue",
       Message.String("test")) => true } }
-    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage)
+    onReturn expects()
+    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }

@@ -10,6 +10,8 @@ import scala.util.Try
 
 object ScheduledExecutor {
   private val defaultHandler: RejectedExecutionHandler = new AbortPolicy
+
+  lazy val defaultScheduledExecutor = new ScheduledExecutor(1)
 }
 
 /**

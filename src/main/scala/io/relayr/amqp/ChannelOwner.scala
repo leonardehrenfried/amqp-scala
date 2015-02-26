@@ -2,11 +2,27 @@ package io.relayr.amqp
 
 import io.relayr.amqp.rpc.server.ResponseParameters
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.higherKinds
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
+
+  /**
+   * Sends a message over this channel
+   * @param routingDescriptor describes how the Message will be routed, including, exchange, routing key and routing flags
+   * @param message Message to send with properties and headers
+   * @param onReturn callback in case message is returned undelivered
+   * @param returnTimeout duration within which a return would be expected, messages returned after this time will not cause a callback
+   */
+  def send(routingDescriptor: RoutingDescriptor, message: Message, onReturn: () ⇒ Unit, returnTimeout: FiniteDuration): Unit
+
+  /**
+   * Sends a message over this channel
+   * @param routingDescriptor describes how the Message will be routed, including, exchange, routing key and routing flags
+   * @param message Message to send with properties and headers
+   */
   def send(routingDescriptor: RoutingDescriptor, message: Message): Unit
 
   def sendPublish(publish: Publish): Unit =
