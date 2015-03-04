@@ -23,7 +23,7 @@ Build connections with io.relayr.amqp.ConnectionHolder.builder
 
 Create a connection:
 
-```
+```scala
 val connection = ConnectionHolder.builder("amqps://guest:password@host:port")
   .eventHooks(EventHooks(eventListener))
   .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
