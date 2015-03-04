@@ -1,6 +1,7 @@
 package io.relayr.amqp
 
 import java.nio.charset.Charset
+import java.util.UUID
 
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentType, ContentEncoding }
@@ -72,5 +73,10 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
   they should "toString body no output with no encoding" in {
     val m = Message.Array("string".getBytes(Charset.defaultCharset()))
     m.toString should be ("""Message(MessageProperties(), body=6 BYTES)""")
+  }
+
+  "Message creation" should "fail fast on attempt to add unsupported value type" in {
+    val message = Message.String("")
+    intercept[IllegalArgumentException](message.withHeaders("id" → UUID.randomUUID()))
   }
 }
