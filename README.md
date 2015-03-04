@@ -32,13 +32,13 @@ val connection = ConnectionHolder.builder("amqps://guest:password@host:port")
 
 Create a channel:
 
-```
+```scala
 val channel = connection.newChannel()
 ```
 
 Create an RPC server listening on queue "queue.name", expecting a String and echoing it back:
 
-```
+```scala
 def rpcHandler(request: Message): Future[Message] = request match {
   case Message.String(string) => Future(Message.String(string))
 }
@@ -48,14 +48,14 @@ val rpcServerCloser = channel.rpcServer(queue, AckOnHandled)(rpcHandler)
 
 Create an RPC client method which sends requests to the queue "queue.name" with a response timeout of 10 seconds :
 
-```
+```scala
 val rpcClient = RPCClient(channel)
 val rpcMethod = rpcClient.newMethod(Exchange.Default.route("queue.name"), 10 second)
 ```
 
 Create a consumer on "queue.name" printing out strings sent to it:
 
-```
+```scala
 def consumer(request: Message): Unit = request match {
   case Message.String(string) => println(string)
 }
@@ -65,7 +65,7 @@ channel.addConsumer(queue, consumer)
 
 Send a message to "queue.name":
 
-```
+```scala
 channel.send(Exchange.Default.route("queue.name"), Message.String("message")
 ```
 
