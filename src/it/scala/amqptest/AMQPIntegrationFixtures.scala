@@ -1,5 +1,8 @@
 package amqptest
 
+import java.net.InetAddress
+
+import io.relayr.amqp.Event.ConnectionEvent.ConnectionEstablished
 import io.relayr.amqp.{ReconnectionStrategy, EventHooks, ConnectionHolder, Event}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Suite, BeforeAndAfterAll}
@@ -21,7 +24,7 @@ trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker 
   trait ClientTestContext {
     val clientEventListener = mockFunction[Event, Unit]
 
-    clientEventListener expects *
+    clientEventListener expects ConnectionEstablished(InetAddress.getByName("localhost"),brokerAmqpPort,0 seconds)
 
     val clientConnection: ConnectionHolder = connection(clientEventListener)
   }
@@ -29,7 +32,7 @@ trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker 
   trait ServerTestContext {
     val serverEventListener = mockFunction[Event, Unit]
 
-    serverEventListener expects * // connection established event
+    serverEventListener expects ConnectionEstablished(InetAddress.getByName("localhost"),brokerAmqpPort,0 seconds) // connection established event
 
     val serverConnection: ConnectionHolder = connection(serverEventListener)
   }

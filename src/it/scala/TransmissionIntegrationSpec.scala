@@ -22,7 +22,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
-    val destinationDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent)
+    val destinationDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent, true, true)
 
     // define expectations
     receiver expects * onCall { message: Message ⇒
@@ -109,5 +109,14 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
+  }
+
+  "declaring the same queue twice" should "be fine" in new ClientTestContext {
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    val newQueueDeclare: QueueDeclare = QueueDeclare(Some("new.queue"))
+    senderChannel.declareQueue(newQueueDeclare)
+    senderChannel.declareQueue(newQueueDeclare)
   }
 }

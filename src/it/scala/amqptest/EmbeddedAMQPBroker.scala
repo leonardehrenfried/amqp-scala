@@ -14,7 +14,7 @@ trait EmbeddedAMQPBroker {
   private val tmpFolder = Files.createTempDir()
   private var broker: Broker = null
 
-  def brokerAmqpPort = 9569
+  def brokerAmqpPort = 19569
 
   def brokerHttpPort = 9568
 
