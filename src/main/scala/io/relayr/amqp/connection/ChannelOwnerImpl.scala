@@ -9,7 +9,6 @@ import io.relayr.amqp.properties.Key
 import io.relayr.amqp.rpc.server.{ RPCServerImpl, ResponseParameters }
 
 import scala.collection.JavaConversions
-import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.higherKinds
@@ -19,19 +18,9 @@ import scala.language.higherKinds
  * @param cs provides the channel to be used for these strategies, after a reconnection of the underlying connection this channel would change
  */
 private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventConsumer: Event ⇒ Unit, scheduledExecutor: ScheduledExecutor) extends ChannelOwner {
-  @volatile private var messageCounter: Long = 0L
-  private val returnCallbackMap = TrieMap[String, () ⇒ Unit]()
-
+  val returnHandler = new ReturnedMessageHandler(scheduledExecutor)
   withChannel { channel ⇒
-    channel.addReturnListener(new ReturnListener {
-      override def handleReturn(replyCode: Int, replyText: String, exchange: String, routingKey: String, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-        println("message returned : " + properties.getMessageId + " - " + returnCallbackMap)
-        for {
-          messageId ← Option(properties.getMessageId)
-          callback ← returnCallbackMap.remove(messageId)
-        } callback()
-      }
-    })
+    channel.addReturnListener(returnHandler.newReturnListener())
   }
 
   def withChannel[T]: ((Channel) ⇒ T) ⇒ T = cs.withChannel
@@ -73,22 +62,8 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
     ensureQueue(channel, queue)
   }
 
-  private def setupReturnCallback(onReturn: () ⇒ Unit, timeout: FiniteDuration): String = {
-    val messageId: String = nextMessageId
-    returnCallbackMap += (messageId → onReturn)
-    val timeoutFuture = scheduledExecutor.delayExecution {
-      returnCallbackMap.remove(messageId)
-    }(timeout)
-    messageId
-  }
-
-  private def nextMessageId: String = {
-    messageCounter += 1
-    messageCounter.toString
-  }
-
   override def send(route: RoutingDescriptor, message: Message, onReturn: () ⇒ Unit, returnTimeout: FiniteDuration): Unit = withChannel { channel ⇒
-    val messageIdProperty = Key.MessageId → setupReturnCallback(onReturn, returnTimeout)
+    val messageIdProperty = Key.MessageId → returnHandler.setupReturnCallback(onReturn, returnTimeout)
     def timestampProperty = Key.Timestamp → new Date()
     val deliveryModeProperty = route.deliveryMode.map(Key.DeliveryMode → _)
 
