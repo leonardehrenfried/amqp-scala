@@ -4,9 +4,11 @@ import java.nio.charset.Charset
 import java.util.UUID
 
 import io.relayr.amqp.properties.Key
-import io.relayr.amqp.properties.Key.{ ContentType, ContentEncoding }
+import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
+
+import scala.language.implicitConversions
 
 class MessageSpec extends FlatSpec with Matchers with MockFactory {
 
@@ -78,5 +80,27 @@ class MessageSpec extends FlatSpec with Matchers with MockFactory {
   "Message creation" should "fail fast on attempt to add unsupported value type" in {
     val message = Message.String("")
     intercept[IllegalArgumentException](message.withHeaders("id" → UUID.randomUUID()))
+  }
+
+  "Message conversion" should "work in the basic case" in {
+    implicit val converter = new ToMessage[String] {
+      def convert(value: String) = Message.String(value.toString).withProperties(ContentType → "text/plain")
+    }
+
+    val Message.String(body) = Message("hello")
+
+    body should be ("hello")
+    Message("hello").property(ContentType) should be (Some("text/plain"))
+  }
+
+  it should "work in the more complicated case" in {
+    implicit def converter[N](implicit numeric: Numeric[N]): ToMessage[N] = new ToMessage[N] {
+      def convert(value: N) = Message.String(numeric.getClass + " " + value.toString).withProperties(ContentType → "number")
+    }
+
+    val Message.String(body) = Message(3)
+
+    body should be ("class scala.math.Numeric$IntIsIntegral$ 3")
+    Message(3).property(ContentType) should be (Some("number"))
   }
 }

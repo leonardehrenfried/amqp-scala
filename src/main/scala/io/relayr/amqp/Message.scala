@@ -13,7 +13,10 @@ import scala.collection.JavaConversions
 object Message {
   private val utf8 = "UTF-8"
 
-  def apply(messageProperties: MessageProperties, body: ByteArray) =
+  def apply[T: ToMessage](thing: T)(implicit messageConverter: ToMessage[T]): Message =
+    messageConverter.convert(thing)
+
+  def apply(messageProperties: MessageProperties, body: ByteArray): Message =
     new Message(messageProperties, body)
 
   def unapply(message: Message): Option[(MessageProperties, ByteArray)] =
@@ -127,4 +130,8 @@ class Message(val messageProperties: MessageProperties, val body: ByteArray) {
     val state = Seq(messageProperties, body)
     state.map(_.hashCode()).foldLeft(0)((a, b) ⇒ 31 * a + b)
   }
+}
+
+trait ToMessage[-T] {
+  def convert(value: T): Message
 }
