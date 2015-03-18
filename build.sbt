@@ -8,12 +8,12 @@ lazy val root = Project("rabbitmq-scala-client", file(".")).
     organization := "io.relayr",
     crossScalaVersions := Seq("2.10.4", "2.11.5"),
     libraryDependencies ++= Seq(
-      "org.apache.qpid" % "qpid-broker" % "0.30" % "it",
+      "org.apache.qpid" % "qpid-broker" % "0.30" % "it,test", // test scope is just so that it's not included in compile scope in the published pom, may be related to https://github.com/sbt/sbt/issues/1380
       "org.scalatest" %% "scalatest" % "2.2.1" % "it,test",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % "it,test",
       "com.rabbitmq" % "amqp-client" % "3.4.2")).
-  settings(publishSettings: _*).
-  settings(Defaults.itSettings: _*)
+  settings(Defaults.itSettings: _*).
+  settings(publishSettings: _*)
 
 scalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
@@ -47,6 +47,7 @@ lazy val mavenCentralPublishSettings = Seq(
       Some("releases"  at nexus + "service/local/staging/deploy/maven2")
   },
   publishArtifact in Test := false,
+  publishArtifact in IntegrationTest := false,
   pomIncludeRepository := { _ => false })
 
 lazy val extraPomXml: NodeSeq =
