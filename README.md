@@ -9,12 +9,25 @@ The main reason for the rewrite is to not require our clients to use akka, to be
 event hooks to enable statistics gathering.
 
 
-## Requirements
+## Features
 
-1. We currently use the AMQP RPC pattern extensively, so Non-blocking RPC should be fairly easy
-2. Configurable reconnection strategies - (exponential backoff for one)
-3. We have changing logging and statistics requirements, so we need some solution for that (maybe event hooks) - particularly in the areas of dropped or returned messages, connection failures and reconnect attempts
-4. Lightweight interface and configuration - hopefully
+- Sending to and receiving of AMQP messages
+- Configurable reconnection strategies
+- Logging of dropped or returned messages, connection failures and reconnect attempts
+- An implementation of the [RPC pattern over AMQP](https://www.rabbitmq.com/tutorials/tutorial-six-java.html)
+
+
+## Download and inclusion on your project
+
+The artifact is published to Maven Central. To add it to your build, add the
+following to your `build.sbt`:
+
+```scala
+libraryDependencies += "io.relayr" %% "rabbitmq-scala-client" % "$latestVersion"
+```
+
+To find the latest version please visit the
+[project's page on search.maven.org](http://search.maven.org/#search|gav|1|g%3A%22io.relayr%22%20AND%20a%3A%22rabbitmq-scala-client_2.11%22).
 
 
 ## Basic usage
