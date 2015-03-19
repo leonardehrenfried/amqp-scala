@@ -11,7 +11,7 @@ event hooks to enable statistics gathering.
 
 ## Features
 
-- Sending to and receiving of AMQP messages
+- Sending and receiving of AMQP messages
 - Configurable reconnection strategies
 - Logging of dropped or returned messages, connection failures and reconnect attempts
 - An implementation of the [RPC pattern over AMQP](https://www.rabbitmq.com/tutorials/tutorial-six-java.html)
