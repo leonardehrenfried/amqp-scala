@@ -8,6 +8,7 @@ import scala.language.higherKinds
 
 /** Operation to perform on an amqp channel, the underlying connection may fail and be replaced by a new one with the same parameters */
 trait ChannelOwner {
+  def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String)
 
   /**
    * Sends a message over this channel
@@ -38,6 +39,8 @@ trait ChannelOwner {
    */
   def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable
 
+  def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange
+  def declareExchangePassive(name: String): Exchange
   def declareQueue(queue: Queue): String
 
   /** Adds a handler to respond to RPCs on a particular binding */

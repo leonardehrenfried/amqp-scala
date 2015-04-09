@@ -15,14 +15,19 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     val receiver = mockFunction[Message, Unit]
     val serverCloser = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
-      val queue: QueueDeclare = QueueDeclare(Some("test.queue"))
-      serverConnection.newChannel().addConsumer(queue, receiver)
+
+      val serverChannel: ChannelOwner = serverConnection.newChannel()
+      val queue: QueuePassive = QueuePassive(serverChannel.declareQueue(QueueDeclare(Some("test.queue"))))
+      val exchange = serverChannel.declareExchange("test-exchange", ExchangeType.topic, false, false)
+      serverChannel.queueBind(queue, exchange, "test.key")
+      serverChannel.addConsumer(queue, receiver)
     }
 
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
-    val destinationDescriptor = ExchangePassive("").route("test.queue", DeliveryMode.NotPersistent, true, true)
+    val exchange = senderChannel.declareExchange("test-exchange", ExchangeType.topic, false, false)
+    val destinationDescriptor = exchange.route("test.key", DeliveryMode.NotPersistent, true, true)
 
     // define expectations
     receiver expects * onCall { message: Message ⇒
@@ -52,7 +57,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "non.existent.queue",
       Message.String("test")) => true } }
     onReturn expects()
-    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
+    senderChannel.send(Exchange.Default.route("non.existent.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
@@ -72,7 +77,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "non.existent.queue",
       Message.String("test")) => true } }
     onReturn expects()
-    senderChannel.send(ExchangePassive("").route("non.existent.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
+    senderChannel.send(Exchange.Default.route("non.existent.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
@@ -85,7 +90,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     val senderChannel: ChannelOwner = clientConnection.newChannel()
 
     senderChannel.declareQueue(QueueDeclare(Some("non.consumed.queue")))
-    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
+    senderChannel.send(Exchange.Default.route("non.consumed.queue", mandatory = true, immediate = false), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
@@ -106,7 +111,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
       "non.consumed.queue",
       Message.String("test")) => true } }
     onReturn expects()
-    senderChannel.send(ExchangePassive("").route("non.consumed.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
+    senderChannel.send(Exchange.Default.route("non.consumed.queue", mandatory = false, immediate = true), testMessage, onReturn, 5 seconds)
 
     Thread.sleep(1000)
   }
@@ -118,5 +123,13 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     val newQueueDeclare: QueueDeclare = QueueDeclare(Some("new.queue"))
     senderChannel.declareQueue(newQueueDeclare)
     senderChannel.declareQueue(newQueueDeclare)
+  }
+
+  "declaring the same exchange twice" should "be fine" in new ClientTestContext {
+    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+    val senderChannel: ChannelOwner = clientConnection.newChannel()
+
+    senderChannel.declareExchange("test.exchange", ExchangeType.topic, false, false)
+    senderChannel.declareExchange("test.exchange", ExchangeType.topic, false, false)
   }
 }

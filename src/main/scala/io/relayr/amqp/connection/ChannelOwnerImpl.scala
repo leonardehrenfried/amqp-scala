@@ -82,6 +82,19 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
   }
 
   /**
+   * Requests an exchange declare on the channel, making sure we can use it
+   */
+  override def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange = withChannel { channel ⇒
+    channel.exchangeDeclare(name, exchangeType.name, durable, autoDelete, JavaConversions.mapAsJavaMap(args))
+    Exchange(name)
+  }
+
+  override def declareExchangePassive(name: String) = withChannel { channel ⇒
+    channel.exchangeDeclarePassive(name)
+    Exchange(name)
+  }
+
+  /**
    * Requests a queue declare on the channel, making sure we can use it and obtaining it's name (if we don't have that)
    */
   private def ensureQueue(channel: Channel, queue: Queue): String = queue match {
@@ -97,6 +110,10 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
     def close(): Unit = withChannel { channel ⇒
       channel.basicCancel(consumerTag)
     }
+  }
+
+  def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String): Unit = withChannel { channel ⇒
+    channel.queueBind(queue.name, exchange.name, routingKey)
   }
 }
 

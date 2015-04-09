@@ -1,19 +1,21 @@
 package io.relayr.amqp
 
 object Exchange {
-  val Default = ExchangePassive("")
-  val Direct = ExchangePassive("amq.direct")
-  val Fanout = ExchangePassive("amq.fanout")
-  val Topic = ExchangePassive("amq.topic")
-  val Headers = ExchangePassive("amq.headers")
-  val Match = ExchangePassive("amq.match")
+  val Default = Exchange("")
+  val Direct = Exchange("amq.direct")
+  val Fanout = Exchange("amq.fanout")
+  val Topic = Exchange("amq.topic")
+  val Headers = Exchange("amq.headers")
+  val Match = Exchange("amq.match")
 }
 
-/** Defines an exchange to connect to or create */
-sealed trait Exchange
-
-/** Describes an exchange which should already exist, an error is thrown if it does not */
-case class ExchangePassive(name: String) extends Exchange {
+/**
+ * Describes an exchange which should already exist, an error will be thrown on use if it does not
+ *
+ * It is recommended to use ChannelOwner.declareExchange or ChannelOwner.declareExchangePassive to create this as they
+ * ensures the exchange exists.
+ */
+case class Exchange(name: String) {
   def route(routingKey: String, deliveryMode: DeliveryMode, mandatory: Boolean = false, immediate: Boolean = false) =
     RoutingDescriptor(this, routingKey, Some(deliveryMode), mandatory = mandatory, immediate = immediate)
 
@@ -44,5 +46,10 @@ case class ExchangePassive(name: String) extends Exchange {
     RoutingDescriptor(this, routingKey, deliveryMode, mandatory = mandatory, immediate = immediate)
 }
 
-/** Parameters to create a new exchange */
-case class ExchangeDeclare(name: String, exchangeType: String, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty) extends Exchange
+abstract class ExchangeType(val name: String)
+object ExchangeType {
+  case object direct extends ExchangeType("direct")
+  case object topic extends ExchangeType("topic")
+  case object fanout extends ExchangeType("fanout")
+  case object headers extends ExchangeType("headers")
+}

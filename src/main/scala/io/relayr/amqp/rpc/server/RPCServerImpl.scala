@@ -20,7 +20,7 @@ import scala.util.{ Failure, Success }
  * @param handler handles incoming messages
  */
 private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue, ackMode: RpcServerAutoAckMode, eventConsumer: Event ⇒ Unit, implicit val executionContext: ExecutionContext, handler: Message ⇒ Future[Message], responseParameters: ResponseParameters) extends Closeable {
-  private val responseExchange: ExchangePassive = Exchange.Default
+  private val responseExchange: Exchange = Exchange.Default
 
   private val consumerCloser = channelOwner.addConsumerAckManual(listenQueue, requestConsumer)
 
