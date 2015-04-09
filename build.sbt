@@ -1,19 +1,28 @@
 import scala.xml.NodeSeq
 import scalariform.formatter.preferences._
 
-lazy val root = Project("rabbitmq-scala-client", file(".")).
+val commonSettings = Seq(
+  scalaVersion := "2.11.5",
+  organization := "io.relayr",
+  crossScalaVersions := Seq("2.10.4", "2.11.5"))
+
+lazy val `rabbitmq-scala-client` = project.in(file(".")).
   configs(IntegrationTest).
   settings(
-    scalaVersion := "2.11.5",
-    organization := "io.relayr",
-    crossScalaVersions := Seq("2.10.4", "2.11.5"),
+    commonSettings: _*,
     libraryDependencies ++= Seq(
-      "org.apache.qpid" % "qpid-broker" % "0.30" % "it,test", // test scope is just so that it's not included in compile scope in the published pom, may be related to https://github.com/sbt/sbt/issues/1380
-      "org.scalatest" %% "scalatest" % "2.2.1" % "it,test",
+      "org.scalatest" %% "scalatest" % "2.1.3" % "it,test",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % "it,test",
       "com.rabbitmq" % "amqp-client" % "3.4.2")).
   settings(Defaults.itSettings: _*).
-  settings(publishSettings: _*)
+  settings(publishSettings: _*).
+  dependsOn(`amqp-embedded-test` % "it,test")
+
+lazy val `amqp-embedded-test` = project.
+  settings(
+    commonSettings: _*,
+    libraryDependencies ++= Seq(
+      "org.apache.qpid" % "qpid-broker" % "0.30"))
 
 scalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
