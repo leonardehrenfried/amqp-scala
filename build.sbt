@@ -8,8 +8,8 @@ val commonSettings = Seq(
 
 lazy val `rabbitmq-scala-client` = project.in(file(".")).
   configs(IntegrationTest).
+  settings(commonSettings: _*).
   settings(
-    commonSettings: _*,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.1.3" % "it,test",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % "it,test",
@@ -19,8 +19,8 @@ lazy val `rabbitmq-scala-client` = project.in(file(".")).
   dependsOn(`amqp-embedded-test` % "it,test")
 
 lazy val `amqp-embedded-test` = project.
+  settings(commonSettings: _*).
   settings(
-    commonSettings: _*,
     libraryDependencies ++= Seq(
       "org.apache.qpid" % "qpid-broker" % "0.30"))
 
