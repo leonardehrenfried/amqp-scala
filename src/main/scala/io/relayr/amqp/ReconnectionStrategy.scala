@@ -27,6 +27,8 @@ object ReconnectionStrategy {
 
   /**
    * Uses Lyra to build a topology recovery https://github.com/jhalterman/lyra . Lyra provides many options for recovery strategies and can recover closed connections, channels or consumers.
+   *
+   * Include Lyra as a dependency in your project to use this
    * @param config a lyra Config
    */
   case class LyraRecoveryStrategy(config: lyra.config.Config) extends ReconnectionStrategy
