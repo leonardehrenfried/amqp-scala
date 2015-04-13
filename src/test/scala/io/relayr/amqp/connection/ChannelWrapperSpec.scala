@@ -9,17 +9,14 @@ import io.relayr.amqp.properties.Key.{ CorrelationId, ContentEncoding, ContentTy
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 
-class ChannelOwnerSpec extends WordSpecLike with Matchers with MockFactory {
+class ChannelWrapperSpec extends WordSpecLike with Matchers with MockFactory {
 
-  "ChannelOwner" when {
+  "ChannelWrapper" when {
     val envelope: Envelope = new Envelope(2001L, false, "exchange", "routing key")
     val channel = mock[Channel]
-    val cs = new ChannelSessionProvider {
-      override def withChannel[T](expression: (Channel) ⇒ T): T = expression(channel)
-    }
     val eventConsumer: Event ⇒ Unit = mockFunction[Event, Unit]
     channel.addReturnListener _ expects *
-    val channelOwner: ChannelOwner = new ChannelOwnerImpl(cs, eventConsumer, ScheduledExecutor.defaultScheduledExecutor)
+    val channelOwner: ChannelOwner = new ChannelWrapper(channel, eventConsumer, ScheduledExecutor.defaultScheduledExecutor)
     val consumer = mockFunction[Message, Unit]
 
     val QUEUE_NAME: String = "queue name"

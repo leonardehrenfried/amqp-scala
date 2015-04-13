@@ -68,5 +68,5 @@ private[amqp] abstract class ConnectionHolderFactory {
     createConnectionHolder(connection)
   }
 
-  protected def createConnectionHolder(conn: Connection): ConnectionHolderImpl
+  protected def createConnectionHolder(conn: Connection): ConnectionWrapper
 }

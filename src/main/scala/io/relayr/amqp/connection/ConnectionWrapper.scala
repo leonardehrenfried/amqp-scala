@@ -8,13 +8,11 @@ import io.relayr.amqp.connection.Listeners._
 import scala.concurrent.blocking
 import scala.language.postfixOps
 
-private[amqp] class ConnectionHolderImpl(conn: Connection, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[amqp] class ConnectionWrapper(conn: Connection, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   conn.addShutdownListener(shutdownListener(cause ⇒
     eventConsumer(ConnectionEvent.ConnectionShutdown)
   ))
-
-  private val currentConnection = new CurrentConnection(Some(conn), Map())
 
   private def createChannel(conn: Connection, qos: Option[Int]): Channel = blocking {
     val channel = conn.createChannel()
@@ -44,30 +42,11 @@ private[amqp] class ConnectionHolderImpl(conn: Connection, eventConsumer: Event 
    * @note Blocks on creation of the underlying channel
    */
   def newChannel(qos: Option[Int] = None): ChannelOwner = this.synchronized {
-    ensuringConnection { c ⇒
-      val key: ChannelKey = new ChannelKey(qos)
-      currentConnection.channelMappings = currentConnection.channelMappings + (key -> createChannel(c, qos))
-      channelFactory(new InternalChannelSessionProvider(key), eventConsumer)
-    }
+    channelFactory(createChannel(conn, qos), eventConsumer)
   }
 
   /** Close the connection. */
   override def close(): Unit = this.synchronized {
-    currentConnection.connection.foreach(c ⇒ blocking { c.close() })
-  }
-
-  class InternalChannelSessionProvider(key: ChannelKey) extends ChannelSessionProvider {
-    override def withChannel[T](f: (Channel) ⇒ T): T =
-      f(currentConnection.channelMappings(key))
-  }
-
-  private def ensuringConnection[T](function: (Connection) ⇒ T): T = currentConnection.connection match {
-    case Some(con) ⇒ function(con)
-    // TODO explain and discuss this state exception
-    case None      ⇒ throw new IllegalStateException("Not connected")
+    blocking { conn.close() }
   }
 }
-
-private class CurrentConnection(var connection: Option[Connection], var channelMappings: Map[ChannelKey, Channel])
-
-private class ChannelKey(val qos: Option[Int])

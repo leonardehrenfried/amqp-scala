@@ -15,15 +15,10 @@ import scala.language.higherKinds
 
 /**
  * Provides different use cases for a channel
- * @param cs provides the channel to be used for these strategies, after a reconnection of the underlying connection this channel would change
  */
-private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventConsumer: Event ⇒ Unit, scheduledExecutor: ScheduledExecutor) extends ChannelOwner {
+private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event ⇒ Unit, scheduledExecutor: ScheduledExecutor) extends ChannelOwner {
   val returnHandler = new ReturnedMessageHandler(scheduledExecutor)
-  withChannel { channel ⇒
-    channel.addReturnListener(returnHandler.newReturnListener())
-  }
-
-  def withChannel[T]: ((Channel) ⇒ T) ⇒ T = cs.withChannel
+  channel.addReturnListener(returnHandler.newReturnListener())
 
   /**
    * Adds a handler to respond to RPCs on a particular binding
@@ -34,7 +29,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
   override def rpcServer(listenQueue: Queue, ackMode: RpcServerAutoAckMode, responseParameters: ResponseParameters)(handler: (Message) ⇒ Future[Message])(implicit ec: ExecutionContext): Closeable =
     new RPCServerImpl(this, listenQueue, ackMode, eventConsumer, ec, handler, responseParameters)
 
-  override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = withChannel { channel ⇒
+  override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = {
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
@@ -48,7 +43,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
     new ConsumerCloser(consumerTag)
   }
 
-  override def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable = withChannel { channel ⇒
+  override def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable = {
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
@@ -58,11 +53,11 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
     new ConsumerCloser(consumerTag)
   }
 
-  override def declareQueue(queue: Queue): String = withChannel { channel ⇒
+  override def declareQueue(queue: Queue): String = {
     ensureQueue(channel, queue)
   }
 
-  override def send(route: RoutingDescriptor, message: Message, onReturn: () ⇒ Unit, returnTimeout: FiniteDuration): Unit = withChannel { channel ⇒
+  override def send(route: RoutingDescriptor, message: Message, onReturn: () ⇒ Unit, returnTimeout: FiniteDuration): Unit = {
     val messageIdProperty = Key.MessageId → returnHandler.setupReturnCallback(onReturn, returnTimeout)
     def timestampProperty = Key.Timestamp → new Date()
     val deliveryModeProperty = route.deliveryMode.map(Key.DeliveryMode → _)
@@ -72,7 +67,7 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
     channel.basicPublish(route.exchange.name, route.routingKey, route.mandatory, route.immediate, basicProperties, array)
   }
 
-  override def send(route: RoutingDescriptor, message: Message): Unit = withChannel { channel ⇒
+  override def send(route: RoutingDescriptor, message: Message): Unit = {
     def timestampProperty = Key.Timestamp → new Date()
     val deliveryModeProperty = route.deliveryMode.map(Key.DeliveryMode → _)
 
@@ -84,12 +79,12 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
   /**
    * Requests an exchange declare on the channel, making sure we can use it
    */
-  override def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange = withChannel { channel ⇒
+  override def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange = {
     channel.exchangeDeclare(name, exchangeType.name, durable, autoDelete, JavaConversions.mapAsJavaMap(args))
     Exchange(name)
   }
 
-  override def declareExchangePassive(name: String) = withChannel { channel ⇒
+  override def declareExchangePassive(name: String) = {
     channel.exchangeDeclarePassive(name)
     Exchange(name)
   }
@@ -107,17 +102,16 @@ private[connection] class ChannelOwnerImpl(cs: ChannelSessionProvider, eventCons
   }
 
   class ConsumerCloser(consumerTag: String) extends Closeable {
-    def close(): Unit = withChannel { channel ⇒
+    def close(): Unit = {
       channel.basicCancel(consumerTag)
     }
   }
 
-  def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String): Unit = withChannel { channel ⇒
+  def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String): Unit = {
     channel.queueBind(queue.name, exchange.name, routingKey)
   }
 }
 
-private[amqp] object ChannelOwnerImpl extends ChannelFactory {
-  def apply(cs: ChannelSessionProvider, eventConsumer: Event ⇒ Unit) = new ChannelOwnerImpl(cs, eventConsumer, ScheduledExecutor.defaultScheduledExecutor)
+private[amqp] object ChannelWrapper extends ChannelFactory {
+  def apply(channel: Channel, eventConsumer: Event ⇒ Unit) = new ChannelWrapper(channel, eventConsumer, ScheduledExecutor.defaultScheduledExecutor)
 }
-

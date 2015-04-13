@@ -34,7 +34,7 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
     override val _reconnectionStrategy: ReconnectionStrategy = NoReconnect
     override val _eventHooks: EventHooks = mock[EventHooks]
 
-    override protected def createConnectionHolder(conn: Connection): ConnectionHolderImpl = {
+    override protected def createConnectionHolder(conn: Connection): ConnectionWrapper = {
       null
     }
   }

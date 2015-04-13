@@ -3,7 +3,7 @@ package io.relayr.amqp
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
 import com.rabbitmq.client.{ Connection, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.connection.{ ChannelOwnerImpl, ConnectionHolderFactory, ConnectionHolderImpl }
+import io.relayr.amqp.connection.{ ChannelWrapper, ConnectionHolderFactory, ConnectionWrapper }
 
 /** Holds a connection, the underlying connection may be replaced if it fails */
 trait ConnectionHolder {
@@ -85,8 +85,8 @@ object ConnectionHolder {
     def reconnectionStrategy(i: ReconnectionStrategy) = copy(_reconnectionStrategy = i)
     def eventHooks(i: EventHooks) = copy(_eventHooks = i)
 
-    protected def createConnectionHolder(conn: Connection): ConnectionHolderImpl = {
-      new ConnectionHolderImpl(conn, _eventHooks.event, ChannelOwnerImpl)
+    protected def createConnectionHolder(conn: Connection): ConnectionWrapper = {
+      new ConnectionWrapper(conn, _eventHooks.event, ChannelWrapper)
     }
   }
 }

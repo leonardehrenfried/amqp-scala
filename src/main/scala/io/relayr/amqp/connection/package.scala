@@ -7,5 +7,5 @@ package object connection {
     def withChannel[T](expression: (Channel) ⇒ T): T
   }
 
-  type ChannelFactory = (ChannelSessionProvider, Event ⇒ Unit) ⇒ ChannelOwner
+  type ChannelFactory = (Channel, Event ⇒ Unit) ⇒ ChannelOwner
 }
