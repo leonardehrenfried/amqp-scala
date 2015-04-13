@@ -6,6 +6,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class FutureTimeoutSpec extends FlatSpec with Matchers {
 

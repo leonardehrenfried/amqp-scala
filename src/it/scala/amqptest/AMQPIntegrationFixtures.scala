@@ -1,13 +1,9 @@
 package amqptest
 
-import java.net.InetAddress
-
-import io.relayr.amqp.Event.ConnectionEvent.ConnectionEstablished
-import io.relayr.amqp.{ReconnectionStrategy, EventHooks, ConnectionHolder, Event}
+import io.relayr.amqp.{ConnectionHolder, Event, EventHooks, ReconnectionStrategy}
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{Suite, BeforeAndAfterAll}
+import org.scalatest.{BeforeAndAfterAll, Suite}
 
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker with MockFactory { this: Suite =>
@@ -16,27 +12,26 @@ trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker 
     initializeBroker()
   }
 
-  def connection(eventListener: Event ⇒ Unit) = ConnectionHolder.builder(amqpUri)
+  def connection(eventListener: Event ⇒ Unit, reconnectionStrategy: ReconnectionStrategy) = ConnectionHolder.builder(amqpUri)
     .eventHooks(EventHooks(eventListener))
-    .reconnectionStrategy(ReconnectionStrategy.JavaClientFixedReconnectDelay(1 second))
+    .reconnectionStrategy(reconnectionStrategy)
     .build()
 
   trait ClientTestContext {
+    def clientReconnectionStrategy: ReconnectionStrategy = ReconnectionStrategy.NoReconnect
+
     val clientEventListener = mockFunction[Event, Unit]
 
-    clientEventListener expects ConnectionEstablished(InetAddress.getByName("localhost"),brokerAmqpPort,0 seconds)
-
-    val clientConnection: ConnectionHolder = connection(clientEventListener)
+    val clientConnection: ConnectionHolder = connection(clientEventListener, clientReconnectionStrategy)
   }
 
   trait ServerTestContext {
+    def serverReconnectionStrategy: ReconnectionStrategy = ReconnectionStrategy.NoReconnect
+
     val serverEventListener = mockFunction[Event, Unit]
 
-    serverEventListener expects ConnectionEstablished(InetAddress.getByName("localhost"),brokerAmqpPort,0 seconds) // connection established event
-
-    val serverConnection: ConnectionHolder = connection(serverEventListener)
+    val serverConnection: ConnectionHolder = connection(serverEventListener, serverReconnectionStrategy)
   }
-
 
 
   override def afterAll() = {

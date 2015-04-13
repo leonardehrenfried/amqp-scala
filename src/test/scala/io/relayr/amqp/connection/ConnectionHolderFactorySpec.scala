@@ -2,9 +2,10 @@ package io.relayr.amqp.connection
 
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
-import com.rabbitmq.client.{ ConnectionFactory, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
-import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
+import com.rabbitmq.client.{ Connection, ExceptionHandler, SocketConfigurator }
+import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, LyraRecoveryStrategy, NoReconnect }
+import io.relayr.amqp.{ EventHooks, ReconnectionStrategy }
+import net.jodah.lyra.config.Config
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
@@ -33,18 +34,13 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
     override val _reconnectionStrategy: ReconnectionStrategy = NoReconnect
     override val _eventHooks: EventHooks = mock[EventHooks]
 
-    var lastConnectionFactory: ConnectionFactory = null
-
-    override protected def createConnectionHolder(cf: ConnectionFactory): ReconnectingConnectionHolder = {
-      lastConnectionFactory = cf
+    override protected def createConnectionHolder(conn: Connection): ConnectionHolderImpl = {
       null
     }
   }
 
   "ConnectionHolderFactory" should "build a ConnectionHolder" in new FakeConnectionFactory {
-    val connectionHolder: ConnectionHolder = build()
-
-    val cf = lastConnectionFactory
+    val cf = buildConnectionFactory
 
     cf.isSSL should be (true)
     cf.getHost should be ("host")
@@ -68,9 +64,7 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
   it should "set no reconnection" in new FakeConnectionFactory {
     override val _reconnectionStrategy: ReconnectionStrategy = NoReconnect
 
-    val connectionHolder: ConnectionHolder = build()
-
-    val cf = lastConnectionFactory
+    val cf = buildConnectionFactory
 
     cf.isAutomaticRecoveryEnabled should be (false)
   }
@@ -78,11 +72,17 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
   it should "set reconnection" in new FakeConnectionFactory {
     override val _reconnectionStrategy: ReconnectionStrategy = JavaClientFixedReconnectDelay(8 seconds)
 
-    val connectionHolder: ConnectionHolder = build()
-
-    val cf = lastConnectionFactory
+    val cf = buildConnectionFactory
 
     cf.isAutomaticRecoveryEnabled should be (true)
     cf.getNetworkRecoveryInterval should be ((8 seconds).toMillis)
+  }
+
+  it should "not enable automatic recovery for a lyra recovery strategy" in new FakeConnectionFactory {
+    override val _reconnectionStrategy: ReconnectionStrategy = LyraRecoveryStrategy(new Config())
+
+    val cf = buildConnectionFactory
+
+    cf.isAutomaticRecoveryEnabled should be (false)
   }
 }

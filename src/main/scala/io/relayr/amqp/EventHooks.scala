@@ -1,9 +1,5 @@
 package io.relayr.amqp
 
-import java.net.InetAddress
-
-import scala.concurrent.duration.FiniteDuration
-
 /**
  * Some basic strategies for handling events
  */
@@ -37,8 +33,6 @@ object Event {
   sealed trait ConnectionEvent extends Event
 
   object ConnectionEvent {
-
-    case class ConnectionEstablished(address: InetAddress, port: Int, heartbeatInterval: FiniteDuration) extends ConnectionEvent
 
     case object ConnectionShutdown extends ConnectionEvent
   }

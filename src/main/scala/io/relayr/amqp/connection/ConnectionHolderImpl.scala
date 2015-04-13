@@ -6,10 +6,9 @@ import io.relayr.amqp._
 import io.relayr.amqp.connection.Listeners._
 
 import scala.concurrent.blocking
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
-private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
+private[amqp] class ConnectionHolderImpl(conn: Connection, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
 
   private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
 
@@ -17,8 +16,6 @@ private[amqp] class ReconnectingConnectionHolder(factory: ConnectionFactory, eve
 
   private def reconnect(): Unit = this.synchronized {
     blocking {
-      val conn = factory.newConnection()
-      eventConsumer(ConnectionEvent.ConnectionEstablished(conn.getAddress, conn.getPort, conn.getHeartbeat seconds))
       conn.addShutdownListener(shutdownListener(cause ⇒
         eventConsumer(ConnectionEvent.ConnectionShutdown)
       ))

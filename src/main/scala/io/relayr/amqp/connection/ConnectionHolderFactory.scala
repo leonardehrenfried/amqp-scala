@@ -2,9 +2,11 @@ package io.relayr.amqp.connection
 
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
-import com.rabbitmq.client.{ ConnectionFactory, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
+import com.rabbitmq.client.{ Connection, ConnectionFactory, ExceptionHandler, SocketConfigurator }
+import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, LyraRecoveryStrategy }
 import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
+import net.jodah.lyra.Connections
+import net.jodah.lyra.config.Config
 
 import scala.collection.JavaConversions
 
@@ -27,7 +29,7 @@ private[amqp] abstract class ConnectionHolderFactory {
   def _reconnectionStrategy: ReconnectionStrategy
   def _eventHooks: EventHooks
 
-  def build(): ConnectionHolder = {
+  private[connection] def buildConnectionFactory: ConnectionFactory = {
     val cf = new ConnectionFactory
     cf.setUri(_uri)
     _requestedChannelMax.foreach(cf.setRequestedChannelMax)
@@ -46,14 +48,25 @@ private[amqp] abstract class ConnectionHolderFactory {
     //    _networkRecoveryInterval.foreach(cf.setNetworkRecoveryInterval)
 
     _reconnectionStrategy match {
-      case NoReconnect ⇒ ()
       case JavaClientFixedReconnectDelay(networkRecoveryInterval) ⇒
         cf.setAutomaticRecoveryEnabled(true)
         cf.setNetworkRecoveryInterval(networkRecoveryInterval.toMillis)
-      case _ ⇒ throw new IllegalArgumentException(s"Unsupported strategy ${_reconnectionStrategy}")
+      case _ ⇒ ()
     }
-    createConnectionHolder(cf)
+    cf
   }
 
-  protected def createConnectionHolder(cf: ConnectionFactory): ReconnectingConnectionHolder
+  def build(): ConnectionHolder = {
+    val cf: ConnectionFactory = buildConnectionFactory
+
+    val connection = _reconnectionStrategy match {
+      case LyraRecoveryStrategy(lyraConfig: Config) ⇒
+        Connections.create(cf, lyraConfig)
+      case _ ⇒
+        cf.newConnection()
+    }
+    createConnectionHolder(connection)
+  }
+
+  protected def createConnectionHolder(conn: Connection): ConnectionHolderImpl
 }
