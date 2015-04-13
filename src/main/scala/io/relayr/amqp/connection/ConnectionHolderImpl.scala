@@ -10,23 +10,11 @@ import scala.language.postfixOps
 
 private[amqp] class ConnectionHolderImpl(conn: Connection, eventConsumer: Event ⇒ Unit, channelFactory: ChannelFactory) extends ConnectionHolder {
 
-  private var currentConnection: CurrentConnection = new CurrentConnection(None, Map())
+  conn.addShutdownListener(shutdownListener(cause ⇒
+    eventConsumer(ConnectionEvent.ConnectionShutdown)
+  ))
 
-  reconnect()
-
-  private def reconnect(): Unit = this.synchronized {
-    blocking {
-      conn.addShutdownListener(shutdownListener(cause ⇒
-        eventConsumer(ConnectionEvent.ConnectionShutdown)
-      ))
-      def recreateChannels(channelKeys: Iterable[ChannelKey]): Map[ChannelKey, Channel] = {
-        channelKeys.map(channelKey ⇒
-          (channelKey, createChannel(conn, channelKey.qos))
-        ).toMap
-      }
-      currentConnection = new CurrentConnection(Some(conn), recreateChannels(currentConnection.channelMappings.keys))
-    }
-  }
+  private val currentConnection = new CurrentConnection(Some(conn), Map())
 
   private def createChannel(conn: Connection, qos: Option[Int]): Channel = blocking {
     val channel = conn.createChannel()
