@@ -1,5 +1,6 @@
 package io.relayr.amqp.connection
 
+import java.io.IOException
 import java.util.Date
 
 import com.rabbitmq.client._
@@ -108,7 +109,12 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
   }
 
   def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String): Unit = {
-    channel.queueBind(queue.name, exchange.name, routingKey)
+    try {
+      channel.queueBind(queue.name, exchange.name, routingKey)
+    }
+    catch {
+      case ex: IOException => ex.printStackTrace()
+    }
   }
 }
 
