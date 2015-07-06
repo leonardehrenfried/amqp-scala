@@ -110,6 +110,10 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
   def queueBind(queue: QueuePassive, exchange: Exchange, routingKey: String): Unit = {
     channel.queueBind(queue.name, exchange.name, routingKey)
   }
+
+  override def close(): Unit = {
+    channel.close()
+  }
 }
 
 private[amqp] object ChannelWrapper extends ChannelFactory {
