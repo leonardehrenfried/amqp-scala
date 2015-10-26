@@ -12,34 +12,40 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
 
   "" should "send and receive messages" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
-    val receiver = mockFunction[Message, Unit]
+    val receiver = mockFunction[Envelope, Unit]
     val serverCloser = {
       serverEventListener expects ChannelEvent.ChannelOpened(1, None)
 
       val serverChannel: ChannelOwner = serverConnection.newChannel()
       val queue: QueuePassive = QueuePassive(serverChannel.declareQueue(QueueDeclare(Some("test.queue"))))
-      val exchange = serverChannel.declareExchange("test-exchange", ExchangeType.topic, false, false)
+      val exchange = serverChannel.declareExchange("test-exchange", ExchangeType.topic, durable = false, autoDelete = false)
       serverChannel.queueBind(queue, exchange, "test.key")
-      serverChannel.addConsumer(queue, receiver)
+      serverChannel.addEnvelopeConsumer(queue, receiver)
     }
 
-    // create client connection and bind to routing key
-    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
-    val senderChannel: ChannelOwner = clientConnection.newChannel()
-    val exchange = senderChannel.declareExchange("test-exchange", ExchangeType.topic, false, false)
-    val destinationDescriptor = exchange.route("test.key", DeliveryMode.NotPersistent, true, true)
+    try {
+      // create client connection and bind to routing key
+      clientEventListener expects ChannelEvent.ChannelOpened(1, None)
+      val senderChannel: ChannelOwner = clientConnection.newChannel()
+      val exchange = senderChannel.declareExchange("test-exchange", ExchangeType.topic, durable = false, autoDelete = false)
+      val destinationDescriptor = exchange.route("test.key", DeliveryMode.NotPersistent, mandatory = true, immediate = true)
 
-    // define expectations
-    receiver expects * onCall { message: Message ⇒
-      ()
+      // define expectations
+      receiver expects * onCall { envelope: Envelope =>
+        val Envelope(exchange, routingKey, Message.String(string)) = envelope
+        exchange should be ("test-exchange")
+        routingKey should be ("test.key")
+        string should be ("test")
+      }
+
+      // send message
+      senderChannel.sendPublish(Publish(destinationDescriptor, testMessage))
+
+    } finally {
+      Thread.sleep(1000)
+
+      serverCloser.close()
     }
-
-    // send message
-    senderChannel.sendPublish(Publish(destinationDescriptor, testMessage))
-    
-    Thread.sleep(1000)
-    
-    serverCloser.close()
   }
 
   "mandatory message to non-existent queue" should "be returned" in new ClientTestContext {
@@ -129,7 +135,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
 
-    senderChannel.declareExchange("test.exchange", ExchangeType.topic, false, false)
-    senderChannel.declareExchange("test.exchange", ExchangeType.topic, false, false)
+    senderChannel.declareExchange("test.exchange", ExchangeType.topic, durable = false, autoDelete = false)
+    senderChannel.declareExchange("test.exchange", ExchangeType.topic, durable = false, autoDelete = false)
   }
 }

@@ -8,6 +8,9 @@ Wrapper around the rabbitmq-java-client for better scala usage. Much of this is 
 The main reason for the rewrite is to not require our clients to use akka, to be easier to configure and to implement 
 event hooks to enable statistics gathering.
 
+## Updates
+
+- 0.1.6 - New methods to add consumers which accept an Envelope (encapsulating a message with the exchange and routing key it was sent to)
 
 ## Features
 

@@ -35,9 +35,19 @@ trait ChannelOwner {
   def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable
 
   /**
+   * Listen to a queue, the consumer is responsible for acking the messages
+   */
+  def addEnvelopeConsumerAckManual(queue: Queue, consumer: (Envelope, ManualAcker) ⇒ Unit): Closeable
+
+  /**
    * Listens on the queue, automatically acknowledging messages and then passing them to the consumer
    */
   def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable
+
+  /**
+   * Listens on the queue, automatically acknowledging messages and then passing them to the consumer
+   */
+  def addEnvelopeConsumer(queue: Queue, consumer: Envelope ⇒ Unit): Closeable
 
   def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange
   def declareExchangePassive(name: String): Exchange

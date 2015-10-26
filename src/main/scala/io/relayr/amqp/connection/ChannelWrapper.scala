@@ -3,10 +3,12 @@ package io.relayr.amqp.connection
 import java.util.Date
 
 import com.rabbitmq.client._
+import com.rabbitmq.client.{ Envelope ⇒ JavaEnvelope }
 import io.relayr.amqp._
 import io.relayr.amqp.concurrent.ScheduledExecutor
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.rpc.server.{ RPCServerImpl, ResponseParameters }
+import io.relayr.amqp.{ Envelope ⇒ OurEnvelope }
 
 import scala.collection.JavaConversions
 import scala.concurrent.duration.FiniteDuration
@@ -32,8 +34,22 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
   override def addConsumerAckManual(queue: Queue, consumer: (Message, ManualAcker) ⇒ Unit): Closeable = {
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
-      override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
+      override def handleDelivery(consumerTag: String, envelope: JavaEnvelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
         consumer(Message.Raw(body, properties), new ManualAcker {
+          override def reject(requeue: Boolean): Unit = channel.basicReject(envelope.getDeliveryTag, requeue)
+
+          override def ack(): Unit = channel.basicAck(envelope.getDeliveryTag, false)
+        })
+      }
+    })
+    new ConsumerCloser(consumerTag)
+  }
+
+  override def addEnvelopeConsumerAckManual(queue: Queue, consumer: (OurEnvelope, ManualAcker) ⇒ Unit): Closeable = {
+    val queueName = ensureQueue(channel, queue)
+    val consumerTag = channel.basicConsume(queueName, false, new DefaultConsumer(channel) {
+      override def handleDelivery(consumerTag: String, envelope: JavaEnvelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
+        consumer(OurEnvelope(envelope.getExchange, envelope.getRoutingKey, Message.Raw(body, properties)), new ManualAcker {
           override def reject(requeue: Boolean): Unit = channel.basicReject(envelope.getDeliveryTag, requeue)
 
           override def ack(): Unit = channel.basicAck(envelope.getDeliveryTag, false)
@@ -46,8 +62,18 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
   override def addConsumer(queue: Queue, consumer: Message ⇒ Unit): Closeable = {
     val queueName = ensureQueue(channel, queue)
     val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
-      override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
+      override def handleDelivery(consumerTag: String, envelope: JavaEnvelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
         consumer(Message.Raw(body, properties))
+      }
+    })
+    new ConsumerCloser(consumerTag)
+  }
+
+  override def addEnvelopeConsumer(queue: Queue, consumer: OurEnvelope ⇒ Unit): Closeable = {
+    val queueName = ensureQueue(channel, queue)
+    val consumerTag = channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+      override def handleDelivery(consumerTag: String, envelope: JavaEnvelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
+        consumer(OurEnvelope(envelope.getExchange, envelope.getRoutingKey, Message.Raw(body, properties)))
       }
     })
     new ConsumerCloser(consumerTag)
