@@ -4,6 +4,8 @@ import io.relayr.amqp.RpcServerAutoAckMode.AckOnHandled
 import io.relayr.amqp._
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.collection.immutable.IndexedSeq
+import scala.collection.immutable.Range.Inclusive
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -35,11 +37,15 @@ class RPCConcurrentCallsSpec extends FlatSpec with Matchers with AMQPIntegration
       Future.successful(Message.String("reply to " + string))
     } repeated concurrentCalls times
 
+    private val rpcCallNumbers: Inclusive = Range.inclusive(1, concurrentCalls)
     // make RPC
-    val rpcResultFutures = Range.inclusive(1, concurrentCalls).map(requestNo => rpcMethod(Message.String("request")))
-    Await.result(Future.sequence(rpcResultFutures), atMost = 10 seconds).foreach { message: Message =>
+    val rpcResultFutures = rpcCallNumbers.map(requestNo => rpcMethod(Message.String("request " + requestNo)))
+    val responses: IndexedSeq[Message] = Await.result(Future.sequence(rpcResultFutures), atMost = 10 seconds)
+
+    rpcCallNumbers.foreach { requestNo =>
+      val message = responses(requestNo-1)
       val Message.String(string) = message
-      string should startWith ("reply to request")
+      string should be ("reply to request " + requestNo)
     }
     
     // stop the rpc server, detaching it from the queue
