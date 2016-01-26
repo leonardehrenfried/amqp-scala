@@ -9,9 +9,9 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class RPCIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
+class RPCConcurrentCallsSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
   
-  val testMessage: Message = Message.String("request")
+  val concurrentCalls = 10000
 
   "RPCClient" should "make and fulfill RPCs" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
@@ -31,30 +31,18 @@ class RPCIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixt
     // define expectations
     rpcHandler expects * onCall { message: Message ⇒
       val Message.String(string) = message
-      string should be ("request")
-      Future.successful(Message.String("reply"))
-    }
+      string should startWith ("request")
+      Future.successful(Message.String("reply to " + string))
+    } repeated concurrentCalls times
 
     // make RPC
-    val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
-    val Message.String(string) = Await.result(rpcResultFuture, atMost = 10 second)
-
-    // check response
-    string should be ("reply")
+    val rpcResultFutures = Range.inclusive(1, concurrentCalls).map(requestNo => rpcMethod(Message.String("request")))
+    Await.result(Future.sequence(rpcResultFutures), atMost = 10 seconds).foreach { message: Message =>
+      val Message.String(string) = message
+      string should startWith ("reply to request")
+    }
     
     // stop the rpc server, detaching it from the queue
     rpcServer.close()
-  }
-  
-  "RPCClient" should "throw an exception if the target queue does not exist" in new ClientTestContext {
-    // create client connection and bind to routing key
-    clientEventListener expects ChannelEvent.ChannelOpened(1, None)
-    val rpcClient = RPCClient(clientConnection.newChannel())
-    val rpcDescriptor = Exchange.Default.route("non.existent.queue", mandatory = false, immediate = true)
-    val rpcMethod: RPCMethod = rpcClient.newMethod(rpcDescriptor, 10 second)
-
-    clientEventListener expects *    // make RPC
-    val rpcResultFuture: Future[Message] = rpcMethod(testMessage)
-    intercept[UndeliveredException](Await.result(rpcResultFuture, atMost = 10 second))
   }
 }
