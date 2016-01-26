@@ -13,7 +13,7 @@ class RPCConcurrentCallsSpec extends FlatSpec with Matchers with AMQPIntegration
   
   val concurrentCalls = 10000
 
-  "RPCClient" should "make and fulfill RPCs" in new ClientTestContext with ServerTestContext {
+  "RPCClient" should "make and fulfill " + concurrentCalls + " concurrent RPCs" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
