@@ -12,10 +12,11 @@ import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 class RPCConcurrentCallsSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
-  
-  val concurrentCalls = 10000
 
-  "RPCClient" should "make and fulfill " + concurrentCalls + " concurrent RPCs" in new ClientTestContext with ServerTestContext {
+  val threads = 10
+  val concurrentCalls = 10
+
+  "RPCClient" should "make and fulfill " + concurrentCalls + " concurrent RPCs each over " + threads + " threads" in new ClientTestContext with ServerTestContext {
     // create server connection and bind mock handler to queue
     val rpcHandler = mockFunction[Message, Future[Message]]
     val rpcServer = {
@@ -35,18 +36,24 @@ class RPCConcurrentCallsSpec extends FlatSpec with Matchers with AMQPIntegration
       val Message.String(string) = message
       string should startWith ("request")
       Future.successful(Message.String("reply to " + string))
-    } repeated concurrentCalls times
+    } repeated (concurrentCalls * threads) times
 
-    private val rpcCallNumbers: Inclusive = Range.inclusive(1, concurrentCalls)
-    // make RPC
-    val rpcResultFutures = rpcCallNumbers.map(requestNo => rpcMethod(Message.String("request " + requestNo)))
-    val responses: IndexedSeq[Message] = Await.result(Future.sequence(rpcResultFutures), atMost = 10 seconds)
+    val rpcCallNumbers = Range.inclusive(1, concurrentCalls)
+    val threadNumbers = Range.inclusive(1, threads)
 
-    rpcCallNumbers.foreach { requestNo =>
-      val message = responses(requestNo-1)
-      val Message.String(string) = message
-      string should be ("reply to request " + requestNo)
+    def testAThread() = Future {
+      // make RPC
+      val rpcResultFutures = rpcCallNumbers.map(requestNo => rpcMethod(Message.String("request " + requestNo)))
+      val responses: IndexedSeq[Message] = Await.result(Future.sequence(rpcResultFutures), atMost = 10 seconds)
+
+      rpcCallNumbers.foreach { requestNo =>
+        val message = responses(requestNo - 1)
+        val Message.String(string) = message
+        string should be("reply to request " + requestNo)
+      }
     }
+
+    Await.result(Future.sequence(threadNumbers.map(_ => testAThread())), 20 seconds)
     
     // stop the rpc server, detaching it from the queue
     rpcServer.close()

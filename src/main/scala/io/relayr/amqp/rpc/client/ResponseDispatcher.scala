@@ -18,7 +18,7 @@ private[client] trait ResponseController {
 private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
   private implicit val executionContext = scheduledExecutor.executionContext
   val replyQueueName: String = listenChannel.declareQueue(QueueDeclare(None))
-  @volatile private var callCounter: Long = 0L
+  private var callCounter: Long = 0L
   private val correlationMap = TrieMap[String, Promise[Message]]()
 
   private def consumer(message: Message): Unit =
@@ -47,7 +47,7 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
       () ⇒ promise.failure(new UndeliveredException))
   }
 
-  private def nextUniqueCorrelationId: String = {
+  private def nextUniqueCorrelationId: String = synchronized {
     callCounter += 1
     callCounter.toString
   }
