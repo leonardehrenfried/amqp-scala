@@ -5,7 +5,6 @@ import io.relayr.amqp._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.IndexedSeq
-import scala.collection.immutable.Range.Inclusive
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}

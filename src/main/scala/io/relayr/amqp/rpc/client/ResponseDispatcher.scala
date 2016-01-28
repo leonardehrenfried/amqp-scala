@@ -1,5 +1,7 @@
 package io.relayr.amqp.rpc.client
 
+import java.util.concurrent.atomic.AtomicLong
+
 import io.relayr.amqp._
 import io.relayr.amqp.concurrent.{ CancellableFuture, ScheduledExecutor }
 import io.relayr.amqp.properties.Key.CorrelationId
@@ -18,7 +20,7 @@ private[client] trait ResponseController {
 private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExecutor: ScheduledExecutor) extends ResponseController {
   private implicit val executionContext = scheduledExecutor.executionContext
   val replyQueueName: String = listenChannel.declareQueue(QueueDeclare(None))
-  private var callCounter: Long = 0L
+  private val callCounter = new AtomicLong(0)
   private val correlationMap = TrieMap[String, Promise[Message]]()
 
   private def consumer(message: Message): Unit =
@@ -47,10 +49,7 @@ private[amqp] class ResponseDispatcher(listenChannel: ChannelOwner, scheduledExe
       () ⇒ promise.failure(new UndeliveredException))
   }
 
-  private def nextUniqueCorrelationId: String = synchronized {
-    callCounter += 1
-    callCounter.toString
-  }
+  private def nextUniqueCorrelationId: String = callCounter.incrementAndGet().toString
 
   /**
    * The number of RPC's awaiting responses
