@@ -11,6 +11,7 @@ event hooks to enable statistics gathering.
 ## Updates
 
 - 0.1.6 - New methods to add consumers which accept an Envelope (encapsulating a message with the exchange and routing key it was sent to)
+- 0.1.8 - Security & reliability fix - fix non-atomic update of RPC client call counter
 
 ## Features
 
