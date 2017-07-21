@@ -4,7 +4,7 @@ import java.util.Date
 
 import com.rabbitmq.client.AMQP.BasicProperties
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 package object properties {
 
@@ -54,7 +54,7 @@ package object properties {
     case object UserId extends BasicKey(_.userId)
     case object Expiration extends BasicKey(_.expiration)
     case object Priority extends BasicKey(_.priority)
-    case object Headers extends Key[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, JavaConversions.mapAsJavaMap, JavaConversions.mapAsScalaMap[String, AnyRef] _ andThen (_.toMap)) //
+    case object Headers extends Key[java.util.Map[String, AnyRef], Map[String, AnyRef]](_.headers, _.asJava, _.asScala.toMap) //
     case object CorrelationId extends BasicKey(_.correlationId)
     case object AppId extends BasicKey(_.appId)
   }

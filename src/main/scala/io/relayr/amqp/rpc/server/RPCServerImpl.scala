@@ -27,7 +27,7 @@ private[amqp] class RPCServerImpl(channelOwner: ChannelOwner, listenQueue: Queue
   private def requestConsumer(request: Message, manualAcker: ManualAcker): Unit = {
     if (ackMode == RpcServerAutoAckMode.AckOnReceive)
       manualAcker.ack()
-    executionContext.prepare().execute(new RPCRunnable(request, manualAcker))
+    executionContext.execute(new RPCRunnable(request, manualAcker))
   }
 
   private class RPCRunnable(request: Message, manualAcker: ManualAcker) extends Runnable {

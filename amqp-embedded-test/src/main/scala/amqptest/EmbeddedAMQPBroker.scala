@@ -4,7 +4,7 @@ import java.io.File
 import java.net.URL
 
 import com.google.common.io.Files
-import org.apache.qpid.server.{Broker, BrokerOptions}
+import org.apache.qpid.server.{ Broker, BrokerOptions }
 import org.slf4j.LoggerFactory
 
 trait EmbeddedAMQPBroker {
@@ -21,7 +21,7 @@ trait EmbeddedAMQPBroker {
   val brokerHost: String = "localhost"
 
   private def configFileName = "/test-config.json"
-  
+
   def amqpUri: String = {
     s"amqps://guest:password@$brokerHost:$brokerAmqpPort"
   }
@@ -42,7 +42,7 @@ trait EmbeddedAMQPBroker {
     val workDir = new File(tmpFolder, "work")
     println(" qpid home dir=" + homePath.getAbsolutePath)
     println(" qpid work dir=" + workDir.getAbsolutePath)
-    
+
     System.setProperty("amqj.logging.level", "INFO")
 
     brokerOptions.setConfigProperty("qpid.work_dir", workDir.getAbsolutePath)

@@ -8,7 +8,7 @@ import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
 import net.jodah.lyra.Connections
 import net.jodah.lyra.config.Config
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 private[amqp] abstract class ConnectionHolderFactory {
   def _uri: String
@@ -37,7 +37,7 @@ private[amqp] abstract class ConnectionHolderFactory {
     _requestedHeartbeat.foreach(cf.setRequestedHeartbeat)
     _connectionTimeout.foreach(cf.setConnectionTimeout)
     _shutdownTimeout.foreach(cf.setShutdownTimeout)
-    if (_clientProperties.nonEmpty) cf.setClientProperties(JavaConversions.mapAsJavaMap(_clientProperties))
+    if (_clientProperties.nonEmpty) cf.setClientProperties(_clientProperties.asJava)
     //    _socketFactory.foreach(cf.setSocketFactory)
     //    _saslConfig.foreach(cf.setSaslConfig)
     _sharedExecutor.foreach(cf.setSharedExecutor)

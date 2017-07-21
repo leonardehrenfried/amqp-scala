@@ -9,7 +9,7 @@ import net.jodah.lyra.config.Config
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -51,7 +51,7 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
     cf.getExceptionHandler should be (_exceptionHandler.get)
     cf.getShutdownTimeout should be (_shutdownTimeout.get)
     cf.getRequestedHeartbeat should be (_requestedHeartbeat.get)
-    cf.getClientProperties should be (JavaConversions.mapAsJavaMap(_clientProperties))
+    cf.getClientProperties should be (_clientProperties.asJava)
     //    cf.getSocketFactory should be (_socketFactory)
     //    cf.getNetworkRecoveryInterval should be (_networkRecoveryInterval.get)
     cf.getSocketConfigurator should be (_socketConfigurator.get)

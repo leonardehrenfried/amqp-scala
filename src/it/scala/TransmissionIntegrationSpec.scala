@@ -7,7 +7,7 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 
 class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegrationFixtures {
-  
+
   val testMessage: Message = Message.String("test")
 
   "" should "send and receive messages" in new ClientTestContext with ServerTestContext {
@@ -36,6 +36,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
         exchange should be ("test-exchange")
         routingKey should be ("test.key")
         string should be ("test")
+        ()
       }
 
       // send message
@@ -50,7 +51,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
 
   "mandatory message to non-existent queue" should "be returned" in new ClientTestContext {
     val onReturn = mockFunction[Unit]
-    
+
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -70,7 +71,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
 
   "immediate message to non-existent queue" should "be returned" in new ClientTestContext {
     val onReturn = mockFunction[Unit]
-    
+
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -90,7 +91,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
 
   "mandatory message to non-consumed queue" should "not be returned" in new ClientTestContext {
     val onReturn = mockFunction[Unit]
-    
+
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()
@@ -103,7 +104,7 @@ class TransmissionIntegrationSpec extends FlatSpec with Matchers with AMQPIntegr
 
   "immediate message to non-consumed queue" should "be returned" in new ClientTestContext {
     val onReturn = mockFunction[Unit]
-    
+
     // create client connection and bind to routing key
     clientEventListener expects ChannelEvent.ChannelOpened(1, None)
     val senderChannel: ChannelOwner = clientConnection.newChannel()

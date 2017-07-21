@@ -7,7 +7,7 @@ import com.rabbitmq.client.impl.Frame
 import io.relayr.amqp.properties.Key
 import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 /** Message blob with content headers, usually you would use the child objects to construct / extract different types of messages */
 object Message {
@@ -87,7 +87,7 @@ class Message(val messageProperties: MessageProperties, val body: ByteArray) {
    */
   @throws[IllegalArgumentException]("On unsupported value type")
   def withHeaders(elems: (String, AnyRef)*) = {
-    Frame.arraySize(JavaConversions.seqAsJavaList(elems.map(_._2)))
+    Frame.arraySize(elems.map(_._2).asJava)
     withProperties(properties.Key.Headers → (headers ++ elems))
   }
 

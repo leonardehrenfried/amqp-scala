@@ -25,7 +25,8 @@ object ScheduledExecutor {
  */
 @throws[IllegalArgumentException]("if { @code corePoolSize < 0}")
 @throws[NullPointerException]("if { @code threadFactory} or { @code handler} is null")
-class ScheduledExecutor(corePoolSize: Int,
+class ScheduledExecutor(
+    corePoolSize: Int,
     threadFactory: ThreadFactory = Executors.defaultThreadFactory,
     handler: RejectedExecutionHandler = ScheduledExecutor.defaultHandler) {
 

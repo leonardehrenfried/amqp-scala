@@ -1,12 +1,12 @@
 package amqptest
 
 import io.relayr.amqp.{ConnectionHolder, Event, EventHooks, ReconnectionStrategy}
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.scalamock.scalatest.AbstractMockFactorySelf
+import org.scalatest.{BeforeAndAfterAll, TestSuite}
 
 import scala.language.postfixOps
 
-trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker with MockFactory { this: Suite =>
+trait AMQPIntegrationFixtures extends BeforeAndAfterAll with EmbeddedAMQPBroker with AbstractMockFactorySelf { self: TestSuite =>
 
   override def beforeAll() {
     initializeBroker()

@@ -10,7 +10,7 @@ import io.relayr.amqp.properties.Key
 import io.relayr.amqp.rpc.server.{ RPCServerImpl, ResponseParameters }
 import io.relayr.amqp.{ Envelope ⇒ OurEnvelope }
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.higherKinds
@@ -106,7 +106,7 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
    * Requests an exchange declare on the channel, making sure we can use it
    */
   override def declareExchange(name: String, exchangeType: ExchangeType, durable: Boolean = false, autoDelete: Boolean = false, args: Map[String, AnyRef] = Map.empty): Exchange = {
-    channel.exchangeDeclare(name, exchangeType.name, durable, autoDelete, JavaConversions.mapAsJavaMap(args))
+    channel.exchangeDeclare(name, exchangeType.name, durable, autoDelete, args.asJava)
     Exchange(name)
   }
 
@@ -120,7 +120,7 @@ private[connection] class ChannelWrapper(channel: Channel, eventConsumer: Event 
    */
   private def ensureQueue(channel: Channel, queue: Queue): String = queue match {
     case QueueDeclare(nameOpt, durable, exclusive, autoDelete, args) ⇒
-      channel.queueDeclare(nameOpt.getOrElse(""), durable, exclusive, autoDelete, JavaConversions.mapAsJavaMap(args))
+      channel.queueDeclare(nameOpt.getOrElse(""), durable, exclusive, autoDelete, args.asJava)
         .getQueue
     case QueuePassive(name) ⇒
       channel.queueDeclarePassive(name)

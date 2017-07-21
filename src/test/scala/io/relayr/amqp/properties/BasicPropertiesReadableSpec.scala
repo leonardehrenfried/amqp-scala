@@ -8,7 +8,7 @@ import io.relayr.amqp.MessageProperties
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpec }
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 class BasicPropertiesReadableSpec extends WordSpec with Matchers with MockFactory {
 
@@ -22,7 +22,7 @@ class BasicPropertiesReadableSpec extends WordSpec with Matchers with MockFactor
     val USER_ID = "user id"
     val EXPIRATION = "expiration"
     val PRIORITY = 2
-    val HEADERS: util.Map[String, AnyRef] = JavaConversions.mapAsJavaMap(Map("key" → "value"))
+    val HEADERS: util.Map[String, AnyRef] = Map("key" → "value".asInstanceOf[AnyRef]).asJava
     val CORRELATION_ID = "correlation id"
     val APP_ID = "app id"
     val CONTENT_ENCODING = "content encoding"

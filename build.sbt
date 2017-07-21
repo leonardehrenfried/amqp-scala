@@ -1,22 +1,24 @@
 import scala.xml.NodeSeq
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
 val commonSettings = Seq(
-  scalaVersion := "2.11.5",
+  scalaVersion := "2.12.2",
   organization := "io.relayr",
-  crossScalaVersions := Seq("2.10.4", "2.11.5"),
-  scalacOptions ++= Seq("-Xfatal-warnings", "-feature"))
+  crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2"),
+  scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-feature"))
 
 lazy val `rabbitmq-scala-client` = project.in(file(".")).
   configs(IntegrationTest).
   settings(commonSettings: _*).
   settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "2.1.3" % "it,test",
-      "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % "it,test",
-      "com.rabbitmq" % "amqp-client" % "3.4.2",
-      "net.jodah" % "lyra" % "0.5.0" % "provided")).
+      "org.scalatest" %% "scalatest" % "3.0.3" % "it,test",
+      "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "it,test",
+      "com.rabbitmq" % "amqp-client" % "3.5.7", // same minor version as lyra
+      "net.jodah" % "lyra" % "0.5.3" % "provided")).
   settings(Defaults.itSettings: _*).
+  settings(parallelExecution in IntegrationTest := false).
   settings(publishSettings: _*).
   dependsOn(`amqp-embedded-test` % "it,test")
 
@@ -24,19 +26,19 @@ lazy val `amqp-embedded-test` = project.
   settings(commonSettings: _*).
   settings(
     libraryDependencies ++= Seq(
-      "org.apache.qpid" % "qpid-broker" % "0.30"))
+      "org.apache.qpid" % "qpid-broker" % "0.32"))
 
 scalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(DoubleIndentClassDeclaration, true)
-    .setPreference(PreserveDanglingCloseParenthesis, true)
+    .setPreference(DoubleIndentConstructorArguments, true)
+    .setPreference(DanglingCloseParenthesis, Preserve)
     .setPreference(PreserveSpaceBeforeArguments, true)
     .setPreference(RewriteArrowSymbols, true)
 )
 
 lazy val publishSettings = mavenCentralPublishSettings ++
-  organizationSettings ++ 
+  organizationSettings ++
   Seq(
     name := "RabbitMQ Scala Client",
     licenses := Seq("The MIT License" -> url("http://ithings4u.mit-license.org/")),

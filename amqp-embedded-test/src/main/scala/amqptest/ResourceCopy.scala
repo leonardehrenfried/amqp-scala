@@ -1,12 +1,11 @@
 package amqptest
 
-import java.io.{File, FileInputStream, FileOutputStream, InputStream}
-import java.net.{JarURLConnection, URL}
+import java.io.{ File, FileInputStream, FileOutputStream, InputStream }
+import java.net.{ JarURLConnection, URL }
 
 import sun.net.www.protocol.file.FileURLConnection
 
-import scala.collection.JavaConversions
-
+import scala.collection.JavaConverters._
 
 object ResourceCopy {
 
@@ -28,7 +27,7 @@ object ResourceCopy {
   // an example of crappy integration between java8 and scala
   def copyJarResourcesRecursively(connection: JarURLConnection, destination: File) = {
     val jarEntries = connection.getJarFile.entries()
-    JavaConversions.enumerationAsScalaIterator(jarEntries).foreach {
+    jarEntries.asScala.foreach {
       case nonmatch if !nonmatch.getName.startsWith(connection.getEntryName) ⇒
       case inFile if !inFile.isDirectory ⇒
         val destFile = new File(destination, inFile.getName.substring(connection.getEntryName.length))
