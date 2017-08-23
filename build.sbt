@@ -3,9 +3,9 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.2",
+  scalaVersion := "2.12.3",
   organization := "io.relayr",
-  crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2"),
+  crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.3"),
   scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-feature"))
 
 lazy val `rabbitmq-scala-client` = project.in(file(".")).
