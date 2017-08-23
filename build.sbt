@@ -15,8 +15,9 @@ lazy val `rabbitmq-scala-client` = project.in(file(".")).
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.3" % "it,test",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "it,test",
-      "com.rabbitmq" % "amqp-client" % "3.5.7", // same minor version as lyra
-      "net.jodah" % "lyra" % "0.5.3" % "provided")).
+      "com.rabbitmq" % "amqp-client" % "3.5.7"
+    )
+  ).
   settings(Defaults.itSettings: _*).
   settings(parallelExecution in IntegrationTest := false).
   settings(publishSettings: _*).

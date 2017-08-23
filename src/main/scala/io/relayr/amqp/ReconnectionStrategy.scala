@@ -1,7 +1,5 @@
 package io.relayr.amqp
 
-import net.jodah.lyra
-
 import scala.concurrent.duration.FiniteDuration
 
 sealed trait ReconnectionStrategy
@@ -25,13 +23,4 @@ object ReconnectionStrategy {
    */
   case class JavaClientFixedReconnectDelay(networkRecoveryInterval: FiniteDuration) extends ReconnectionStrategy
 
-  /**
-   * Uses Lyra to build a topology recovery https://github.com/jhalterman/lyra . Lyra provides many options for recovery strategies and can recover closed connections, channels or consumers.
-   *
-   * Include Lyra as a dependency in your project to use this
-   * @param config a lyra Config
-   */
-  case class LyraRecoveryStrategy(config: lyra.config.Config) extends ReconnectionStrategy
 }
-
-//case class ReconnectionStrategy(reconnectDelays: Stream[FiniteDuration], reconnectionExecutor: ExecutionContext)

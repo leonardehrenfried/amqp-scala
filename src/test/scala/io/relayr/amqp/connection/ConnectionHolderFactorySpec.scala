@@ -3,9 +3,8 @@ package io.relayr.amqp.connection
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
 import com.rabbitmq.client.{ Connection, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, LyraRecoveryStrategy, NoReconnect }
+import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
 import io.relayr.amqp.{ EventHooks, ReconnectionStrategy }
-import net.jodah.lyra.config.Config
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
@@ -76,13 +75,5 @@ class ConnectionHolderFactorySpec extends FlatSpec with Matchers with MockFactor
 
     cf.isAutomaticRecoveryEnabled should be (true)
     cf.getNetworkRecoveryInterval should be ((8 seconds).toMillis)
-  }
-
-  it should "not enable automatic recovery for a lyra recovery strategy" in new FakeConnectionFactory {
-    override val _reconnectionStrategy: ReconnectionStrategy = LyraRecoveryStrategy(new Config())
-
-    val cf = buildConnectionFactory
-
-    cf.isAutomaticRecoveryEnabled should be (false)
   }
 }

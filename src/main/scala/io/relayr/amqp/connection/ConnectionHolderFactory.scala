@@ -3,10 +3,8 @@ package io.relayr.amqp.connection
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
 import com.rabbitmq.client.{ Connection, ConnectionFactory, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, LyraRecoveryStrategy }
+import io.relayr.amqp.ReconnectionStrategy.JavaClientFixedReconnectDelay
 import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
-import net.jodah.lyra.Connections
-import net.jodah.lyra.config.Config
 
 import scala.collection.JavaConverters._
 
@@ -59,12 +57,7 @@ private[amqp] abstract class ConnectionHolderFactory {
   def build(): ConnectionHolder = {
     val cf: ConnectionFactory = buildConnectionFactory
 
-    val connection = _reconnectionStrategy match {
-      case LyraRecoveryStrategy(lyraConfig: Config) ⇒
-        Connections.create(cf, lyraConfig)
-      case _ ⇒
-        cf.newConnection()
-    }
+    val connection = cf.newConnection()
     createConnectionHolder(connection)
   }
 

@@ -14,8 +14,7 @@ object ResourceCopy {
       destination.exists() || destination.mkdir()
       assert(destination.isDirectory)
       dir.list().foreach(filename ⇒
-        copyFilesRecursively(new File(origin, filename), new File(destination, filename))
-      )
+        copyFilesRecursively(new File(origin, filename), new File(destination, filename)))
     case file if file.isFile ⇒
       val in = new FileInputStream(file)
       val out = new FileOutputStream(destination)
