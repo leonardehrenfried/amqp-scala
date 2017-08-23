@@ -3,7 +3,7 @@ package io.relayr.amqp.connection
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
 import com.rabbitmq.client.{ Connection, ConnectionFactory, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.JavaClientFixedReconnectDelay
+import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
 import io.relayr.amqp.{ ConnectionHolder, EventHooks, ReconnectionStrategy }
 
 import scala.collection.JavaConverters._
@@ -49,7 +49,8 @@ private[amqp] abstract class ConnectionHolderFactory {
       case JavaClientFixedReconnectDelay(networkRecoveryInterval) ⇒
         cf.setAutomaticRecoveryEnabled(true)
         cf.setNetworkRecoveryInterval(networkRecoveryInterval.toMillis)
-      case _ ⇒ ()
+      case NoReconnect ⇒
+        cf.setAutomaticRecoveryEnabled(false)
     }
     cf
   }

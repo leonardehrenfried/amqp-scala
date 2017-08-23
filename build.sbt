@@ -6,7 +6,9 @@ val commonSettings = Seq(
   scalaVersion := "2.12.3",
   organization := "io.relayr",
   crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.3"),
-  scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-feature"))
+  scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-feature"),
+  scalacOptions in Test --= Seq("-Xfatal-warnings") // mocking triggers a deprecated warning
+)
 
 lazy val `rabbitmq-scala-client` = project.in(file(".")).
   configs(IntegrationTest).
@@ -15,7 +17,7 @@ lazy val `rabbitmq-scala-client` = project.in(file(".")).
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.3" % "it,test",
       "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "it,test",
-      "com.rabbitmq" % "amqp-client" % "3.5.7"
+      "com.rabbitmq" % "amqp-client" % "4.2.0"
     )
   ).
   settings(Defaults.itSettings: _*).
