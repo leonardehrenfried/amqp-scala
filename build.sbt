@@ -41,13 +41,7 @@ lazy val organizationSettings = Seq(organizationName := "Relayr",
 
 lazy val mavenCentralPublishSettings = Seq(
   publishMavenStyle := true,
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-  },
+  publishTo := sonatypePublishTo.value,
   sonatypeProjectHosting := Some(GitHubHosting("leonardehrenfried", "amqp-scala", "mail@leonard.io")),
   developers := List(Developer("platy","Mike Bush", "platy@example.com", url("https://github.com/platy")),
                      Developer("leonardehrenfried", "Leonard Ehrenfried", "mail@leonard.io", url("https://leonard.io"))),
@@ -55,10 +49,28 @@ lazy val mavenCentralPublishSettings = Seq(
   publishArtifact in IntegrationTest := false,
   pomIncludeRepository := { _ => false })
 
-lazy val extraPomXml: NodeSeq =
-  <developers>
-    <developer>
-      <id>platy</id>
-      <name>Mike Bush</name>
-    </developer>
-  </developers>
+def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
+  val prefix = out.ref.dropV.value
+  val rev    = out.commitSuffix.mkString("+", "-", "")
+  val dirty  = out.dirtySuffix.value
+  val dynamicVersion = (rev, dirty) match {
+    case ("", "") =>
+      prefix
+    case (_, _) =>
+      // (version)+(distance)-(rev)
+      s"$prefix$rev"
+  }
+  val isRelease = out.isVersionStable()
+  if (isRelease) dynamicVersion else s"${dynamicVersion}-SNAPSHOT"
+}
+
+def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
+
+inThisBuild(
+  List(
+    version := dynverGitDescribeOutput.value.mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value)),
+    dynver := {
+      val d = new java.util.Date
+      sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
+    }
+  ))
