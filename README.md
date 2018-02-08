@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/leonardehrenfried/rabbitmq-scala-client.svg?branch=master)](https://travis-ci.org/relayr/rabbitmq-scala-client)
+[![Build Status](https://travis-ci.org/leonardehrenfried/rabbitmq-scala-client.svg?branch=master)](https://travis-ci.org/leonardehrenfried/rabbitmq-scala-client)
 [![Coverage Status](https://coveralls.io/repos/relayr/rabbitmq-scala-client/badge.svg?branch=master)](https://coveralls.io/r/relayr/rabbitmq-scala-client?branch=master)
 
 # rabbitmq-scala-client
