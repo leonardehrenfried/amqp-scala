@@ -60,8 +60,8 @@ def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
       // (version)+(distance)-(rev)
       s"$prefix$rev"
   }
-  val isRelease = out.isVersionStable()
-  if (isRelease) dynamicVersion else s"${dynamicVersion}-SNAPSHOT"
+  val isRelease = !out.isSnapshot()
+  if (isRelease) dynamicVersion else s"$dynamicVersion-SNAPSHOT"
 }
 
 def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
