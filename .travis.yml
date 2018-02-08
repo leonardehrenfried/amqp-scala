@@ -2,7 +2,7 @@ language: scala
 scala:
   - 2.12.4
 script:
-  - sbt coverage test it:test
+  - sbt coverageAggregate test it:test
 after_success:
   - sbt coveralls
 cache:
