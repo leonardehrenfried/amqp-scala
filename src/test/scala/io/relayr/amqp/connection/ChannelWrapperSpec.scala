@@ -1,11 +1,11 @@
-package io.relayr.amqp.connection
+package io.leonard.amqp.connection
 
 import com.rabbitmq.client.AMQP.BasicProperties.Builder
 import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{ Envelope, AMQP, Channel, Consumer }
-import io.relayr.amqp._
-import io.relayr.amqp.concurrent.ScheduledExecutor
-import io.relayr.amqp.properties.Key.{ CorrelationId, ContentEncoding, ContentType }
+import io.leonard.amqp._
+import io.leonard.amqp.concurrent.ScheduledExecutor
+import io.leonard.amqp.properties.Key.{ CorrelationId, ContentEncoding, ContentType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpecLike }
 

@@ -1,10 +1,10 @@
-package io.relayr.amqp.properties
+package io.leonard.amqp.properties
 
 import java.util
 import java.util.Date
 
 import com.rabbitmq.client.AMQP.BasicProperties.Builder
-import io.relayr.amqp.MessageProperties
+import io.leonard.amqp.MessageProperties
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpec }
 

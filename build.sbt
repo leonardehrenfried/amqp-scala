@@ -2,7 +2,7 @@ import scala.xml.NodeSeq
 
 val commonSettings = Seq(
   scalaVersion := "2.12.3",
-  organization := "io.relayr",
+  organization := "io.leonard",
   crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.3"),
   scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-feature"),
   scalacOptions in Test --= Seq("-Xfatal-warnings") // mocking triggers a deprecated warning

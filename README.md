@@ -27,16 +27,16 @@ The artifact is published to Maven Central. To add it to your build, add the
 following to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.relayr" %% "rabbitmq-scala-client" % "$latestVersion"
+libraryDependencies += "io.leonard" %% "rabbitmq-scala-client" % "$latestVersion"
 ```
 
 To find the latest version please visit the
-[project's page on search.maven.org](http://search.maven.org/#search|gav|1|g%3A%22io.relayr%22%20AND%20a%3A%22rabbitmq-scala-client_2.11%22).
+[project's page on search.maven.org](http://search.maven.org/#search|gav|1|g%3A%22io.leonard%22%20AND%20a%3A%22rabbitmq-scala-client_2.11%22).
 
 
 ## Basic usage
 
-Build connections with io.relayr.amqp.ConnectionHolder.builder
+Build connections with io.leonard.amqp.ConnectionHolder.builder
 
 Create a connection:
 

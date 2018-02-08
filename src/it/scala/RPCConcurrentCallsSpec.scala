@@ -2,9 +2,9 @@ import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.{SynchronousQueue, ThreadFactory, ThreadPoolExecutor, TimeUnit}
 
 import amqptest.AMQPIntegrationFixtures
-import io.relayr.amqp.Event.ChannelEvent
-import io.relayr.amqp.RpcServerAutoAckMode.AckOnHandled
-import io.relayr.amqp._
+import io.leonard.amqp.Event.ChannelEvent
+import io.leonard.amqp.RpcServerAutoAckMode.AckOnHandled
+import io.leonard.amqp._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.IndexedSeq

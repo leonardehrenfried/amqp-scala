@@ -1,6 +1,6 @@
 import amqptest.AMQPIntegrationFixtures
-import io.relayr.amqp.Event.ChannelEvent
-import io.relayr.amqp._
+import io.leonard.amqp.Event.ChannelEvent
+import io.leonard.amqp._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.postfixOps

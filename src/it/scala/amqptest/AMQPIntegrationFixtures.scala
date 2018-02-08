@@ -1,6 +1,6 @@
 package amqptest
 
-import io.relayr.amqp.{ConnectionHolder, Event, EventHooks, ReconnectionStrategy}
+import io.leonard.amqp.{ConnectionHolder, Event, EventHooks, ReconnectionStrategy}
 import org.scalamock.scalatest.AbstractMockFactorySelf
 import org.scalatest.{BeforeAndAfterAll, TestSuite}
 

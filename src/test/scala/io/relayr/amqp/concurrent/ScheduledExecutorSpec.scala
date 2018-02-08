@@ -1,4 +1,4 @@
-package io.relayr.amqp.concurrent
+package io.leonard.amqp.concurrent
 
 import java.util.concurrent.TimeoutException
 

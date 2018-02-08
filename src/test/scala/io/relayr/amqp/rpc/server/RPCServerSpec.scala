@@ -1,12 +1,12 @@
-package io.relayr.amqp.rpc.server
+package io.leonard.amqp.rpc.server
 
 import java.util.concurrent.Executor
 
-import io.relayr.amqp.DeliveryMode.NotPersistent
-import io.relayr.amqp.Event.HandlerError
-import io.relayr.amqp.RpcServerAutoAckMode.AckOnReceive
-import io.relayr.amqp._
-import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
+import io.leonard.amqp.DeliveryMode.NotPersistent
+import io.leonard.amqp.Event.HandlerError
+import io.leonard.amqp.RpcServerAutoAckMode.AckOnReceive
+import io.leonard.amqp._
+import io.leonard.amqp.properties.Key.{ CorrelationId, ReplyTo }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 

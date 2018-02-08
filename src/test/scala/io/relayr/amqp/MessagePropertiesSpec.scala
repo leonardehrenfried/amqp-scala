@@ -1,10 +1,10 @@
-package io.relayr.amqp
+package io.leonard.amqp
 
 import java.util.Date
 
-import io.relayr.amqp.DeliveryMode.Persistent
-import io.relayr.amqp.properties.Key
-import io.relayr.amqp.properties.Key._
+import io.leonard.amqp.DeliveryMode.Persistent
+import io.leonard.amqp.properties.Key
+import io.leonard.amqp.properties.Key._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 

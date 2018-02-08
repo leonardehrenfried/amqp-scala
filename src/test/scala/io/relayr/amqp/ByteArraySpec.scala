@@ -1,4 +1,4 @@
-package io.relayr.amqp
+package io.leonard.amqp
 
 import org.scalatest.{ FlatSpec, Matchers }
 

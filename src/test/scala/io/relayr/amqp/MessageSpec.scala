@@ -1,10 +1,10 @@
-package io.relayr.amqp
+package io.leonard.amqp
 
 import java.nio.charset.Charset
 import java.util.UUID
 
-import io.relayr.amqp.properties.Key
-import io.relayr.amqp.properties.Key.{ ContentEncoding, ContentType }
+import io.leonard.amqp.properties.Key
+import io.leonard.amqp.properties.Key.{ ContentEncoding, ContentType }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 

@@ -1,10 +1,10 @@
-package io.relayr.amqp.connection
+package io.leonard.amqp.connection
 
 import java.util.concurrent.{ ExecutorService, ThreadFactory }
 
 import com.rabbitmq.client.{ Connection, ExceptionHandler, SocketConfigurator }
-import io.relayr.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
-import io.relayr.amqp.{ EventHooks, ReconnectionStrategy }
+import io.leonard.amqp.ReconnectionStrategy.{ JavaClientFixedReconnectDelay, NoReconnect }
+import io.leonard.amqp.{ EventHooks, ReconnectionStrategy }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 

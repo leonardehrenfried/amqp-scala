@@ -1,7 +1,7 @@
-package io.relayr.amqp.rpc.client
+package io.leonard.amqp.rpc.client
 
-import io.relayr.amqp._
-import io.relayr.amqp.properties.Key.{ CorrelationId, ReplyTo }
+import io.leonard.amqp._
+import io.leonard.amqp.properties.Key.{ CorrelationId, ReplyTo }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FlatSpec, Matchers }
 
