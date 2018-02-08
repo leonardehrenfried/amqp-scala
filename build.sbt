@@ -1,4 +1,5 @@
 import scala.xml.NodeSeq
+import xerial.sbt.Sonatype._
 
 val commonSettings = Seq(
   organization := "io.leonard",
@@ -30,11 +31,9 @@ lazy val `amqp-embedded-test` = project.
 lazy val publishSettings = mavenCentralPublishSettings ++
   organizationSettings ++
   Seq(
-    name := "RabbitMQ Scala Client",
+    name := "AMQP Scala Client",
     licenses := Seq("The MIT License" -> url("http://ithings4u.mit-license.org/")),
-    homepage := Some(url("https://github.com/relayr/rabbitmq-scala-client")),
     description := "Scala wrapper for rabbitmq-java-client",
-    pomExtra := extraPomXml
   )
 
 lazy val organizationSettings = Seq(organizationName := "Relayr",
@@ -49,15 +48,14 @@ lazy val mavenCentralPublishSettings = Seq(
     else
       Some("releases"  at nexus + "service/local/staging/deploy/maven2")
   },
+  sonatypeProjectHosting := Some(GitHubHosting("leonardehrenfried", "amqp-scala", "mail@leonard.io")),
+  developers := List(Developer("platy","Mike Bush", "platy@example.com", url("https://github.com/platy")),
+                     Developer("leonardehrenfried", "Leonard Ehrenfried", "mail@leonard.io", url("https://leonard.io"))),
   publishArtifact in Test := false,
   publishArtifact in IntegrationTest := false,
   pomIncludeRepository := { _ => false })
 
 lazy val extraPomXml: NodeSeq =
-  <scm>
-    <url>git@github.com:relayr/rabbitmq-scala-client.git</url>
-    <connection>scm:git:git@github.com:relayr/rabbitmq-scala-client.git</connection>
-  </scm>
   <developers>
     <developer>
       <id>platy</id>
