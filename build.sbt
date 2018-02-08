@@ -1,6 +1,4 @@
 import scala.xml.NodeSeq
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import scalariform.formatter.preferences._
 
 val commonSettings = Seq(
   scalaVersion := "2.12.3",
@@ -30,15 +28,6 @@ lazy val `amqp-embedded-test` = project.
   settings(
     libraryDependencies ++= Seq(
       "org.apache.qpid" % "qpid-broker" % "0.32"))
-
-scalariformSettings ++ Seq(
-  ScalariformKeys.preferences := ScalariformKeys.preferences.value
-    .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(DoubleIndentConstructorArguments, true)
-    .setPreference(DanglingCloseParenthesis, Preserve)
-    .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(RewriteArrowSymbols, true)
-)
 
 lazy val publishSettings = mavenCentralPublishSettings ++
   organizationSettings ++
