@@ -1,3 +1,4 @@
+[![Maven Central](https://img.shields.io/maven-central/v/io.leonard/amqp-scala_2.12.svg?style=flat-square)](https://index.scala-lang.org/leonardehrenfried/amqp-scala/amqp-scala/)
 [![Build Status](https://travis-ci.org/leonardehrenfried/rabbitmq-scala-client.svg?branch=master&style=flat-square)](https://img.shields.io/travis/leonardehrenfried/amqp-scala/master.svg?style=flat-square)
 [![Coverage Status](https://coveralls.io/repos/relayr/rabbitmq-scala-client/badge.svg?branch=master)](https://coveralls.io/r/relayr/rabbitmq-scala-client?branch=master)
 
