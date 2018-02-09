@@ -31,7 +31,7 @@ libraryDependencies += "io.leonard" %% "rabbitmq-scala-client" % "$latestVersion
 ```
 
 To find the latest version please visit the
-[project's page on search.maven.org](http://search.maven.org/#search|gav|1|g%3A%22io.leonard%22%20AND%20a%3A%22rabbitmq-scala-client_2.11%22).
+[project's page on search.maven.org](http://search.maven.org/#search|gav|1|g%3A%22io.leonard%22%20AND%20a%3A%22rabbitmq-scala-client_2.12%22).
 
 
 ## Basic usage
