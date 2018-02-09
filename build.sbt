@@ -59,9 +59,9 @@ def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
       prefix
     case (_, _) =>
       // (version)+(distance)-(rev)
-      prefix + rev
+      prefix + rev + dirty
   }
-  val dynamicVersion = if (out.hasNoTags()) s"0.0.0-${out.version}" else ver
+  val dynamicVersion = if (out.hasNoTags()) s"0.0.0-${out.version}$dirty" else ver
   val isSnapshot     = out.isSnapshot() || out.hasNoTags()
   if (isSnapshot) s"$dynamicVersion-SNAPSHOT" else dynamicVersion
 }
