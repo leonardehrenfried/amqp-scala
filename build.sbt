@@ -1,4 +1,3 @@
-import scala.xml.NodeSeq
 import xerial.sbt.Sonatype._
 
 val commonSettings = Seq(
@@ -31,7 +30,7 @@ lazy val `amqp-embedded-test` = project.
 lazy val publishSettings = mavenCentralPublishSettings ++
   organizationSettings ++
   Seq(
-    name := "AMQP Scala Client",
+    name := "amqp-scala",
     licenses := Seq("The MIT License" -> url("http://ithings4u.mit-license.org/")),
     description := "Scala wrapper for rabbitmq-java-client",
   )
