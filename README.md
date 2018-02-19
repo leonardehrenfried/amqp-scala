@@ -13,6 +13,7 @@ event hooks to enable statistics gathering.
 
 - 0.1.6 - New methods to add consumers which accept an Envelope (encapsulating a message with the exchange and routing key it was sent to)
 - 0.1.8 - Security & reliability fix - fix non-atomic update of RPC client call counter
+- 0.2.0 - Compile for Scala 2.12
 
 ## Features
 
@@ -28,7 +29,7 @@ The artifact is published to Maven Central. To add it to your build, add the
 following to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.leonard" %% "rabbitmq-scala-client" % "$latestVersion"
+libraryDependencies += "io.leonard" %% "amqp-scala" % "$latestVersion"
 ```
 
 To find the latest version please visit the
